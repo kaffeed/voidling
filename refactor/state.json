@@ -1,0 +1,76 @@
+{
+  "session_id": "refactor_2025_10_01_voidbound",
+  "started_at": "2025-10-01T00:00:00Z",
+  "last_updated": "2025-10-01T00:00:00Z",
+  "source_codebase": "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot",
+  "target_codebase": "C:\\Users\\s.schubert\\source\\personal\\voidbound",
+  "refactor_type": "language_rewrite",
+  "source_language": "csharp",
+  "target_language": "go",
+  "current_phase": 1,
+  "total_phases": 13,
+  "completed_tasks": [
+    "Initialize Go module"
+  ],
+  "in_progress_tasks": [],
+  "pending_phases": [
+    "Phase 1: Project Setup & Infrastructure",
+    "Phase 2: Database Layer",
+    "Phase 3: RuneScape API Client",
+    "Phase 4: Discord Bot Core",
+    "Phase 5: Command Modules - Registration System",
+    "Phase 6: Command Modules - Trackable Events",
+    "Phase 7: Command Modules - Schedulable Events",
+    "Phase 8: Command Modules - Admin/Warnings",
+    "Phase 9: Scheduled Tasks",
+    "Phase 10: Utilities & Helpers",
+    "Phase 11: Configuration & Deployment",
+    "Phase 12: Testing",
+    "Phase 13: Documentation"
+  ],
+  "architecture_notes": {
+    "original": {
+      "framework": ".NET 8.0 Worker Service",
+      "discord_lib": "Discord.Net v3.12.0",
+      "database": "SQLite + Entity Framework Core",
+      "scheduler": "Coravel v5.0.2"
+    },
+    "target": {
+      "language": "Go 1.24.1",
+      "discord_lib": "discordgo",
+      "database": "SQLite + sqlc + goose",
+      "scheduler": "robfig/cron or custom",
+      "context_pattern": "context7"
+    }
+  },
+  "key_features": [
+    "Slash commands for event management",
+    "Boss of the Week competitions (5 categories)",
+    "Skill of the Week competitions (23 skills)",
+    "Mass event scheduling",
+    "RuneScape account linking",
+    "Progress tracking via OSRS Hiscore API",
+    "Scheduled event reminders via DM",
+    "Leaderboard system",
+    "Warning system",
+    "Role-based permissions",
+    "Interactive components (buttons, modals)",
+    "Thread creation for events"
+  ],
+  "database_entities": [
+    "AccountLink",
+    "TrackableEvent",
+    "TrackableEventParticipation",
+    "SchedulableEvent",
+    "SchedulableEventParticipation",
+    "GuildWarningChannel",
+    "Warning"
+  ],
+  "next_steps": [
+    "Set up Go project structure",
+    "Add dependencies to go.mod",
+    "Create database schema",
+    "Set up goose migrations",
+    "Define sqlc queries"
+  ]
+}

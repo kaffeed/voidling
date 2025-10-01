@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sqlc:*)",
+      "Bash(go build:*)",
+      "Bash(test:*)",
+      "mcp__context7__get-library-docs",
+      "mcp__context7__resolve-library-id",
+      "WebFetch(domain:github.com)",
+      "Bash(curl:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot\\"
+    ]
+  }
+}
