@@ -14,9 +14,9 @@
 # Go workspace file
 go.work
 
-# Binary
-voidling
-# cmd/voidling/voidling
+# Binary (root directory only)
+/voidling
+/voidling.exe
 
 # Database
 *.db
