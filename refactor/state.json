@@ -1,9 +1,9 @@
 {
-  "session_id": "refactor_2025_10_01_voidbound",
+  "session_id": "refactor_2025_10_01_voidling",
   "started_at": "2025-10-01T00:00:00Z",
   "last_updated": "2025-10-01T00:00:00Z",
   "source_codebase": "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot",
-  "target_codebase": "C:\\Users\\s.schubert\\source\\personal\\voidbound",
+  "target_codebase": "C:\\Users\\s.schubert\\source\\personal\\voidling",
   "refactor_type": "language_rewrite",
   "source_language": "csharp",
   "target_language": "go",

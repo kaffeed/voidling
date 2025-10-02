@@ -15,8 +15,8 @@
 go.work
 
 # Binary
-voidbound
-cmd/voidbound/voidbound
+voidling
+cmd/voidling/voidling
 
 # Database
 *.db

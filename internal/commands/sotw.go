@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/internal/models"
+	"github.com/kaffeed/voidling/internal/models"
 )
 
 // HandleSOTWStart handles /sotw start command

@@ -4,7 +4,7 @@
   "completed_at": "2025-10-01T12:45:00Z",
   "source_type": "existing_csharp_implementation",
   "source_location": "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot",
-  "target_project": "voidbound",
+  "target_project": "voidling",
   "current_phase": 8,
   "total_phases": 8,
   "status": "completed",

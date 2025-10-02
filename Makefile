@@ -1,10 +1,10 @@
-# Makefile for voidbound Discord bot
+# Makefile for voidling Discord bot
 
 # Variables
-BINARY_NAME=voidbound
+BINARY_NAME=voidling
 BINARY_WINDOWS=$(BINARY_NAME).exe
 BINARY_UNIX=$(BINARY_NAME)
-CMD_PATH=./cmd/voidbound
+CMD_PATH=./cmd/voidling
 MIGRATIONS_DIR=./migrations
 BUILD_DIR=./build
 
@@ -29,7 +29,7 @@ all: clean fmt vet build
 
 ## help: Display this help message
 help:
-	@echo "voidbound - Discord Bot Makefile"
+	@echo "voidling - Discord Bot Makefile"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
@@ -156,7 +156,7 @@ sqlc-generate:
 migrate-up:
 	@echo "Running migrations up..."
 	@if command -v goose > /dev/null; then \
-		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidbound/voidbound.db} up; \
+		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidling/voidling.db} up; \
 	else \
 		echo "goose not found. Run 'make install-tools' first"; \
 		exit 1; \
@@ -166,7 +166,7 @@ migrate-up:
 migrate-down:
 	@echo "Rolling back last migration..."
 	@if command -v goose > /dev/null; then \
-		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidbound/voidbound.db} down; \
+		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidling/voidling.db} down; \
 	else \
 		echo "goose not found. Run 'make install-tools' first"; \
 		exit 1; \
@@ -176,7 +176,7 @@ migrate-down:
 migrate-status:
 	@echo "Migration status..."
 	@if command -v goose > /dev/null; then \
-		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidbound/voidbound.db} status; \
+		goose -dir $(MIGRATIONS_DIR) sqlite3 $${DATABASE_PATH:-~/.voidling/voidling.db} status; \
 	else \
 		echo "goose not found. Run 'make install-tools' first"; \
 		exit 1; \
@@ -198,7 +198,7 @@ migrate-create:
 ## docker-build: Build Docker image
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t voidbound:latest .
+	docker build -t voidling:latest .
 
 ## docker-run: Run Docker container
 docker-run:
@@ -206,7 +206,7 @@ docker-run:
 	docker run --rm -it \
 		-v $${PWD}/.env:/app/.env \
 		-v $${PWD}/data:/app/data \
-		voidbound:latest
+		voidling:latest
 
 ## init: Initialize project (install tools, download deps, generate code)
 init: install-tools download sqlc-generate

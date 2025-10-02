@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get home directory: %w", err)
 		}
-		dbPath = filepath.Join(homeDir, ".voidbound", "voidbound.db")
+		dbPath = filepath.Join(homeDir, ".voidling", "voidling.db")
 	}
 
 	logLevel := os.Getenv("LOG_LEVEL")

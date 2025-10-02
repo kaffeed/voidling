@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/internal/database"
-	"github.com/kaffeed/voidbound/internal/embeds"
-	"github.com/kaffeed/voidbound/internal/models"
-	"github.com/kaffeed/voidbound/internal/wiseoldman"
+	"github.com/kaffeed/voidling/internal/database"
+	"github.com/kaffeed/voidling/internal/embeds"
+	"github.com/kaffeed/voidling/internal/models"
+	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
 // TrackableCommands handles BOTW and SOTW event commands

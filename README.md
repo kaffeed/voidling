@@ -1,4 +1,4 @@
-# voidbound
+# voidling
 
 A Discord bot for managing RuneScape clan events, rewritten in Go from TopezEventBot (C#).
 
@@ -25,8 +25,8 @@ A Discord bot for managing RuneScape clan events, rewritten in Go from TopezEven
 ## Project Structure
 
 ```
-voidbound/
-├── cmd/voidbound/         # Main application entry point
+voidling/
+├── cmd/voidling/         # Main application entry point
 ├── internal/
 │   ├── bot/              # Discord bot core logic
 │   ├── commands/         # Command handlers (to be implemented)
@@ -54,7 +54,7 @@ voidbound/
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd voidbound
+   cd voidling
    ```
 
 2. Install dependencies:
@@ -75,12 +75,12 @@ voidbound/
 
 5. Build the bot:
    ```bash
-   go build -o voidbound ./cmd/voidbound
+   go build -o voidling ./cmd/voidling
    ```
 
 6. Run the bot:
    ```bash
-   ./voidbound
+   ./voidling
    ```
 
 ## Database
@@ -90,7 +90,7 @@ The bot uses SQLite for data persistence. Migrations are run automatically on st
 ### Running Migrations Manually
 
 ```bash
-goose -dir migrations sqlite3 voidbound.db up
+goose -dir migrations sqlite3 voidling.db up
 ```
 
 ### Regenerating sqlc Code
@@ -135,7 +135,7 @@ sqlc generate
 Environment variables:
 
 - `DISCORD_TOKEN` (required): Your Discord bot token
-- `DATABASE_PATH` (optional): Path to SQLite database (default: `~/.voidbound/voidbound.db`)
+- `DATABASE_PATH` (optional): Path to SQLite database (default: `~/.voidling/voidling.db`)
 - `LOG_LEVEL` (optional): Logging level - debug, info, warn, error (default: `info`)
 - `DISCORD_GUILD_ID` (optional): Guild ID for command registration during development
 
@@ -155,7 +155,7 @@ If you have existing data in TopezEventBot, you'll need to export and import:
 
 1. Export data from the old SQLite database
 2. Transform schema to match new structure
-3. Import into voidbound database
+3. Import into voidling database
 
 (Detailed migration script to be added)
 

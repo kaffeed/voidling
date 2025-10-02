@@ -5,7 +5,7 @@
 ## Source Analysis
 
 **Source Type:** Existing C# Implementation (TopezEventBot)
-**Target:** Go Discord Bot (voidbound)
+**Target:** Go Discord Bot (voidling)
 
 **Core Features to Implement:**
 1. Boss of the Week (BOTW) - 5 categories of bosses

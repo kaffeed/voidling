@@ -10,7 +10,10 @@
       "Bash(curl:*)",
       "Bash(git rev-parse:*)",
       "Bash(make:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git reset:*)",
+      "WebSearch",
+      "WebFetch(domain:oldschool.runescape.wiki)"
     ],
     "additionalDirectories": [
       "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot\\"

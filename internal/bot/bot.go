@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/config"
-	"github.com/kaffeed/voidbound/internal/commands"
-	"github.com/kaffeed/voidbound/internal/database"
-	"github.com/kaffeed/voidbound/internal/models"
-	"github.com/kaffeed/voidbound/internal/timezone"
-	"github.com/kaffeed/voidbound/internal/wiseoldman"
+	"github.com/kaffeed/voidling/config"
+	"github.com/kaffeed/voidling/internal/commands"
+	"github.com/kaffeed/voidling/internal/database"
+	"github.com/kaffeed/voidling/internal/models"
+	"github.com/kaffeed/voidling/internal/timezone"
+	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
 // Bot represents the Discord bot
@@ -215,8 +215,9 @@ func (b *Bot) registerCommands() error {
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "activity",
-					Description: "What activity (e.g., Corporeal Beast, Nex)",
+					Description: "Select the boss or activity",
 					Required:    true,
+					Choices:     commands.MassBossChoices(),
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,

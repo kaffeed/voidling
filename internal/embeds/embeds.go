@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/internal/models"
-	"github.com/kaffeed/voidbound/internal/wiseoldman"
+	"github.com/kaffeed/voidling/internal/models"
+	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
 // Color constants for embeds
@@ -354,22 +354,93 @@ func formatNumber(n int64) string {
 	return result
 }
 
+// getBossImageURL returns the OSRS Wiki image URL for a boss/activity
+func getBossImageURL(activity string) string {
+	// Map of activity names (snake_case) to OSRS Wiki image URLs
+	bossImages := map[string]string{
+		// PvM Bosses
+		"corporeal_beast":      "https://oldschool.runescape.wiki/images/thumb/Corporeal_Beast.png/270px-Corporeal_Beast.png",
+		"nex":                  "https://oldschool.runescape.wiki/images/thumb/Nex.png/270px-Nex.png",
+		"nightmare":            "https://oldschool.runescape.wiki/images/thumb/The_Nightmare.png/250px-The_Nightmare.png",
+		"phosanis_nightmare":   "https://oldschool.runescape.wiki/images/thumb/Phosani%27s_Nightmare.png/250px-Phosani%27s_Nightmare.png",
+		"commander_zilyana":    "https://oldschool.runescape.wiki/images/thumb/Commander_Zilyana.png/250px-Commander_Zilyana.png",
+		"kril_tsutsaroth":      "https://oldschool.runescape.wiki/images/thumb/K%27ril_Tsutsaroth.png/250px-K%27ril_Tsutsaroth.png",
+		"general_graardor":     "https://oldschool.runescape.wiki/images/thumb/General_Graardor.png/250px-General_Graardor.png",
+		"kreearra":             "https://oldschool.runescape.wiki/images/thumb/Kree%27arra.png/250px-Kree%27arra.png",
+		"godwars":              "https://oldschool.runescape.wiki/images/thumb/God_Wars_Dungeon.png/300px-God_Wars_Dungeon.png",
+		// Raids
+		"theatre_of_blood":     "https://oldschool.runescape.wiki/images/thumb/Theatre_of_Blood_logo.png/250px-Theatre_of_Blood_logo.png",
+		"chambers_of_xeric":    "https://oldschool.runescape.wiki/images/thumb/Chambers_of_Xeric_logo.png/250px-Chambers_of_Xeric_logo.png",
+		"tombs_of_amascut":     "https://oldschool.runescape.wiki/images/thumb/Tombs_of_Amascut.png/300px-Tombs_of_Amascut.png",
+		// Wilderness Bosses
+		"king_black_dragon":    "https://oldschool.runescape.wiki/images/thumb/King_Black_Dragon.png/280px-King_Black_Dragon.png",
+		"scorpia":              "https://oldschool.runescape.wiki/images/thumb/Scorpia.png/300px-Scorpia.png",
+		"artio":                "https://oldschool.runescape.wiki/images/thumb/Artio.png/250px-Artio.png",
+		"callisto":             "https://oldschool.runescape.wiki/images/thumb/Callisto.png/300px-Callisto.png",
+		"calvarion":            "https://oldschool.runescape.wiki/images/thumb/Calvarion.png/300px-Calvarion.png",
+		"chaos_elemental":      "https://oldschool.runescape.wiki/images/thumb/Chaos_Elemental.png/280px-Chaos_Elemental.png",
+		"chaos_fanatic":        "https://oldschool.runescape.wiki/images/thumb/Chaos_Fanatic.png/200px-Chaos_Fanatic.png",
+		"crazy_archaeologist":  "https://oldschool.runescape.wiki/images/thumb/Crazy_Archaeologist.png/200px-Crazy_Archaeologist.png",
+		"spindel":              "https://oldschool.runescape.wiki/images/thumb/Spindel.png/300px-Spindel.png",
+		"venenatis":            "https://oldschool.runescape.wiki/images/thumb/Venenatis.png/300px-Venenatis.png",
+		"vetion":               "https://oldschool.runescape.wiki/images/thumb/Vet%27ion.png/250px-Vet%27ion.png",
+		// Skilling Bosses
+		"tempoross":            "https://oldschool.runescape.wiki/images/thumb/Tempoross.png/280px-Tempoross.png",
+		"wintertodt":           "https://oldschool.runescape.wiki/images/thumb/Wintertodt.png/300px-Wintertodt.png",
+		"guardians_of_the_rift": "https://oldschool.runescape.wiki/images/thumb/The_Great_Guardian.png/250px-The_Great_Guardian.png",
+	}
+
+	// Return boss-specific image or default OSRS icon
+	if url, exists := bossImages[activity]; exists {
+		return url
+	}
+	return "https://oldschool.runescape.wiki/images/OSRS_icon.png"
+}
+
 // MassEventWithTimezone creates an embed for mass events with timezone information
 func MassEventWithTimezone(activity, location string, scheduledTime time.Time, timezone string) *discordgo.MessageEmbed {
 	// Get timezone abbreviation
 	tzAbbrev := scheduledTime.Format("MST")
-	
+
 	// Create Discord timestamp (auto-converts to user's local time)
 	discordTimestamp := fmt.Sprintf("<t:%d:F>", scheduledTime.Unix())
 	relativeTime := fmt.Sprintf("<t:%d:R>", scheduledTime.Unix())
 
+	// Format activity name for display (convert snake_case to Title Case)
+	displayName := formatActivityName(activity)
+
 	return &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("Mass Event: %s", activity),
-		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s (%s)\n%s", location, discordTimestamp, relativeTime, tzAbbrev),
+		Title:       fmt.Sprintf("⚔️ Mass Event: %s", displayName),
+		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s\n**Starts:** %s", location, discordTimestamp, relativeTime),
 		Color:       ColorMass,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: getBossImageURL(activity),
+		},
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Scheduled in %s timezone", timezone),
+			Text: fmt.Sprintf("Scheduled in %s (%s)", timezone, tzAbbrev),
 		},
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
+}
+
+// formatActivityName converts snake_case to Title Case for display
+func formatActivityName(activity string) string {
+	result := ""
+	capitalize := true
+	for _, c := range activity {
+		if c == '_' {
+			result += " "
+			capitalize = true
+		} else if capitalize {
+			if c >= 'a' && c <= 'z' {
+				result += string(c - 32) // Convert to uppercase
+			} else {
+				result += string(c)
+			}
+			capitalize = false
+		} else {
+			result += string(c)
+		}
+	}
+	return result
 }

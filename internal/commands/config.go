@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/internal/database"
-	"github.com/kaffeed/voidbound/internal/embeds"
-	"github.com/kaffeed/voidbound/internal/timezone"
+	"github.com/kaffeed/voidling/internal/database"
+	"github.com/kaffeed/voidling/internal/embeds"
+	"github.com/kaffeed/voidling/internal/timezone"
 )
 
 // ConfigCommands handles server configuration commands

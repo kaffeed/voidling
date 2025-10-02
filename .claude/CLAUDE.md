@@ -1,8 +1,8 @@
-# Voidbound Discord Bot - Development Memory
+# Voidling Discord Bot - Development Memory
 
 ## Project Overview
 
-**Project Name:** voidbound
+**Project Name:** voidling
 **Type:** Discord bot rewrite from C# to Go
 **Original Project:** TopezEventBot (C#/.NET)
 **Primary Language:** Go 1.24.1
@@ -36,8 +36,8 @@
 
 **2. Project Structure Setup**
 ```
-voidbound/
-├── cmd/voidbound/main.go          # Application entry point
+voidling/
+├── cmd/voidling/main.go          # Application entry point
 ├── config/config.go               # Environment-based configuration
 ├── internal/
 │   ├── bot/bot.go                 # Discord bot core with discordgo
@@ -95,11 +95,11 @@ voidbound/
 
 **Configuration System** (`config/config.go`):
 - Environment variable loading
-- Defaults for DATABASE_PATH (~/.voidbound/)
+- Defaults for DATABASE_PATH (~/.voidling/)
 - Optional guild ID for dev command registration
 - Log level configuration
 
-**Main Application** (`cmd/voidbound/main.go`):
+**Main Application** (`cmd/voidling/main.go`):
 - Database initialization
 - Automatic migrations on startup
 - Bot lifecycle management
@@ -130,7 +130,7 @@ require (
 
 **7. Build Validation**
 - ✅ Project compiles successfully
-- ✅ Binary size: 25MB (voidbound.exe)
+- ✅ Binary size: 25MB (voidling.exe)
 - ✅ All imports resolved
 - ✅ sqlc code generation working
 - ✅ No build errors
@@ -275,7 +275,7 @@ require (
 #### Files Created This Session
 
 **Source Code (10 files):**
-1. `cmd/voidbound/main.go` - 96 lines - Application entry point with migrations
+1. `cmd/voidling/main.go` - 96 lines - Application entry point with migrations
 2. `config/config.go` - 47 lines - Configuration loading from env vars
 3. `internal/bot/bot.go` - 177 lines - Discord bot core with interaction routing
 4. `internal/models/hiscore.go` - 97 lines - OSRS domain models (skills, bosses)
@@ -336,7 +336,7 @@ case discordgo.InteractionModalSubmit:
 ```go
 // Environment variables with defaults
 cfg, err := config.Load()
-// Defaults: ~/.voidbound/voidbound.db, log level "info"
+// Defaults: ~/.voidling/voidling.db, log level "info"
 ```
 
 **4. Error Handling Pattern**
@@ -367,7 +367,7 @@ if err != nil {
 
 ```bash
 DISCORD_TOKEN=required          # Bot authentication token
-DATABASE_PATH=optional          # Default: ~/.voidbound/voidbound.db
+DATABASE_PATH=optional          # Default: ~/.voidling/voidling.db
 LOG_LEVEL=optional             # Default: info (debug|info|warn|error)
 DISCORD_GUILD_ID=optional      # For dev: fast command registration
 ```
@@ -520,7 +520,7 @@ make coverage                # Coverage report
 ```bash
 git init
 git add .
-git commit -m "Initial voidbound project setup
+git commit -m "Initial voidling project setup
 
 - Go project structure with cmd/internal layout
 - Database schema with goose migrations

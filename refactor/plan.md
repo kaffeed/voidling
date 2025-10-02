@@ -1,9 +1,9 @@
-# Refactor Plan - TopezEventBot C# → voidbound Go
+# Refactor Plan - TopezEventBot C# → voidling Go
 
 **Session Started:** 2025-10-01
 **Type:** Complete Language Rewrite (C# → Go)
 **Original Codebase:** TopezEventBot (C#/.NET Discord.Net)
-**Target Codebase:** voidbound (Go/discordgo)
+**Target Codebase:** voidling (Go/discordgo)
 
 ---
 
@@ -63,7 +63,7 @@
    - Progress tracking with starting/ending points
    - Scheduled event reminders via DM
 
-### Target Architecture (Go voidbound)
+### Target Architecture (Go voidling)
 
 **Tech Stack:**
 - **Language:** Go 1.24.1
@@ -145,8 +145,8 @@
 - [x] Initialize Go module (already done: go.mod exists)
 - [ ] Set up project structure following Go conventions
   ```
-  voidbound/
-  ├── cmd/voidbound/         # Main application
+  voidling/
+  ├── cmd/voidling/         # Main application
   ├── internal/
   │   ├── bot/              # Discord bot logic
   │   ├── commands/         # Command handlers
@@ -386,7 +386,7 @@ After implementation, verify:
 | CheckForScheduledEventNotification | scheduler/notifications.go | Pending |
 | FetchEventProgressInvocable | scheduler/progress.go | Pending |
 | Coravel scheduler | robfig/cron or custom | Pending |
-| Program.cs (startup) | cmd/voidbound/main.go | Pending |
+| Program.cs (startup) | cmd/voidling/main.go | Pending |
 | Discord.Net | discordgo | Pending |
 | Entity Framework Core | sqlc + goose | Pending |
 

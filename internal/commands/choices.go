@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/kaffeed/voidbound/internal/timezone"
+	"github.com/kaffeed/voidling/internal/timezone"
 )
 
 // Boss and skill choices for BOTW/SOTW events
@@ -78,6 +78,40 @@ const (
 	WorldSarachnis            WorldBoss = "sarachnis"
 	WorldKalphiteQueen        WorldBoss = "kalphite_queen"
 	WorldSkotizo              WorldBoss = "skotizo"
+)
+
+// MassBoss represents bosses commonly done in mass events
+type MassBoss string
+
+const (
+	MassCorporealBeast    MassBoss = "corporeal_beast"
+	MassNex               MassBoss = "nex"
+	MassNightmare         MassBoss = "nightmare"
+	MassPhosanisNightmare MassBoss = "phosanis_nightmare"
+	MassCommanderZilyana  MassBoss = "commander_zilyana"
+	MassKrilTsutsaroth    MassBoss = "kril_tsutsaroth"
+	MassGeneralGraardor   MassBoss = "general_graardor"
+	MassKreeArra          MassBoss = "kreearra"
+	MassGodwars           MassBoss = "godwars"
+	MassTheatreOfBlood    MassBoss = "theatre_of_blood"
+	MassChambersOfXeric   MassBoss = "chambers_of_xeric"
+	MassTombsOfAmascut    MassBoss = "tombs_of_amascut"
+	// Wildy bosses
+	MassKingBlackDragon    MassBoss = "king_black_dragon"
+	MassScorpia            MassBoss = "scorpia"
+	MassArtio              MassBoss = "artio"
+	MassCallisto           MassBoss = "callisto"
+	MassCalvarion          MassBoss = "calvarion"
+	MassChaosElemental     MassBoss = "chaos_elemental"
+	MassChaosFanatic       MassBoss = "chaos_fanatic"
+	MassCrazyArchaeologist MassBoss = "crazy_archaeologist"
+	MassSpindel            MassBoss = "spindel"
+	MassVenenatis          MassBoss = "venenatis"
+	MassVetion             MassBoss = "vetion"
+	// Skilling bosses
+	MassTempoross         MassBoss = "tempoross"
+	MassWintertodt        MassBoss = "wintertodt"
+	MassGuardiansOfTheRift MassBoss = "guardians_of_the_rift"
 )
 
 // Skill represents non-combat skills for SOTW
@@ -172,6 +206,35 @@ func WorldBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 		{Name: "Sarachnis", Value: string(WorldSarachnis)},
 		{Name: "Kalphite Queen", Value: string(WorldKalphiteQueen)},
 		{Name: "Skotizo", Value: string(WorldSkotizo)},
+	}
+}
+
+// MassBossChoices returns Discord choices for mass event bosses
+func MassBossChoices() []*discordgo.ApplicationCommandOptionChoice {
+	return []*discordgo.ApplicationCommandOptionChoice{
+		{Name: "Corporeal Beast", Value: string(MassCorporealBeast)},
+		{Name: "Nex", Value: string(MassNex)},
+		{Name: "Nightmare", Value: string(MassNightmare)},
+		{Name: "Phosani's Nightmare", Value: string(MassPhosanisNightmare)},
+		{Name: "Commander Zilyana (Saradomin)", Value: string(MassCommanderZilyana)},
+		{Name: "K'ril Tsutsaroth (Zamorak)", Value: string(MassKrilTsutsaroth)},
+		{Name: "General Graardor (Bandos)", Value: string(MassGeneralGraardor)},
+		{Name: "Kree'arra (Armadyl)", Value: string(MassKreeArra)},
+		{Name: "Godwars Dungeon", Value: string(MassGodwars)},
+		{Name: "Theatre of Blood", Value: string(MassTheatreOfBlood)},
+		{Name: "Chambers of Xeric (CoX)", Value: string(MassChambersOfXeric)},
+		{Name: "Tombs of Amascut (ToA)", Value: string(MassTombsOfAmascut)},
+		{Name: "King Black Dragon", Value: string(MassKingBlackDragon)},
+		{Name: "Scorpia", Value: string(MassScorpia)},
+		{Name: "Artio", Value: string(MassArtio)},
+		{Name: "Callisto", Value: string(MassCallisto)},
+		{Name: "Calvarion", Value: string(MassCalvarion)},
+		{Name: "Spindel", Value: string(MassSpindel)},
+		{Name: "Venenatis", Value: string(MassVenenatis)},
+		{Name: "Vet'ion", Value: string(MassVetion)},
+		{Name: "Tempoross", Value: string(MassTempoross)},
+		{Name: "Wintertodt", Value: string(MassWintertodt)},
+		{Name: "Guardians of the Rift", Value: string(MassGuardiansOfTheRift)},
 	}
 }
 

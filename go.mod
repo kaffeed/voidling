@@ -1,4 +1,4 @@
-module github.com/kaffeed/voidbound
+module github.com/kaffeed/voidling
 
 go 1.24.1
 
