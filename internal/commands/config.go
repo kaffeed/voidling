@@ -159,6 +159,17 @@ func (cc *ConfigCommands) HandleShowConfig(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
+	// Check if user is server owner or has administrator permission
+	if !isServerOwnerOrAdmin(s, i) {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Only the server owner or administrators can view server configuration."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
 	// Parse guild ID
 	guildID, err := strconv.ParseInt(i.GuildID, 10, 64)
 	if err != nil {
