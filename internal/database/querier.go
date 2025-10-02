@@ -42,6 +42,7 @@ type Querier interface {
 	GetLastActiveEventByType(ctx context.Context, type_ string) (TrackableEvent, error)
 	GetLatestWOMCompetitionByType(ctx context.Context, type_ string) (WomCompetition, error)
 	GetProgressForParticipation(ctx context.Context, participationID int64) ([]TrackableEventProgress, error)
+	GetSchedulableEventByDiscordID(ctx context.Context, discordEventID string) (SchedulableEvent, error)
 	GetSchedulableEventByID(ctx context.Context, id int64) (SchedulableEvent, error)
 	GetSchedulableEvents(ctx context.Context) ([]SchedulableEvent, error)
 	GetSchedulableEventsInTimeRange(ctx context.Context, arg GetSchedulableEventsInTimeRangeParams) ([]SchedulableEvent, error)

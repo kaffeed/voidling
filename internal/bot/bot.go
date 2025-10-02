@@ -531,6 +531,10 @@ func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Inte
 		b.handleListParticipants(s, i, data)
 	case "list-participants-sotw":
 		b.handleListParticipants(s, i, data)
+	case "participate-mass":
+		b.schedulableCmds.HandleParticipateInMass(s, i, data)
+	case "list-participants-mass":
+		b.schedulableCmds.HandleListParticipantsMass(s, i, data)
 	default:
 		log.Printf("Unknown component action: %s", action)
 	}

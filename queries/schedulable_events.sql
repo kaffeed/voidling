@@ -55,3 +55,8 @@ WHERE id = ?;
 -- name: DeleteSchedulableEvent :exec
 DELETE FROM schedulable_events
 WHERE id = ?;
+
+-- name: GetSchedulableEventByDiscordID :one
+SELECT * FROM schedulable_events
+WHERE discord_event_id = ?
+LIMIT 1;

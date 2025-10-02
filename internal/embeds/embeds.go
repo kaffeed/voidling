@@ -435,7 +435,7 @@ func MassEventWithTimezone(activity, location string, scheduledTime time.Time, t
 
 	return &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("⚔️ Mass Event: %s", displayName),
-		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s\n**Starts:** %s", location, discordTimestamp, relativeTime),
+		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s\n**Starts:** %s\n\n**📢 Important:** Click the \"I'll Participate\" button below to register for this event! This helps us plan and you'll get a reminder before the event starts.", location, discordTimestamp, relativeTime),
 		Color:       ColorMass,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: getBossImageURL(activity),

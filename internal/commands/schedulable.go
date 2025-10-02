@@ -156,20 +156,40 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 
 	embed := embeds.MassEventWithTimezone(activity, location, scheduledTime, tz)
 
+	// Create participation button
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    "I'll Participate",
+					Style:    discordgo.SuccessButton,
+					CustomID: fmt.Sprintf("participate-mass:%s", discordEvent.ID),
+				},
+				discordgo.Button{
+					Label:    "List Participants",
+					Style:    discordgo.SecondaryButton,
+					CustomID: fmt.Sprintf("list-participants-mass:%s", discordEvent.ID),
+				},
+			},
+		},
+	}
+
 	// If notification channel is configured, post there. Otherwise post in command channel
 	if err == nil && guildConfig.EventNotificationChannelID.Valid {
 		// Post to event notification channel
 		notificationChannelID := strconv.FormatInt(guildConfig.EventNotificationChannelID.Int64, 10)
 		_, err = s.ChannelMessageSendComplex(notificationChannelID, &discordgo.MessageSend{
-			Content: content,
-			Embeds:  []*discordgo.MessageEmbed{embed},
+			Content:    content,
+			Embeds:     []*discordgo.MessageEmbed{embed},
+			Components: components,
 		})
 		if err != nil {
 			log.Printf("Error posting to event notification channel: %v", err)
 			// Fallback to command channel on error
 			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Content: content,
-				Embeds:  []*discordgo.MessageEmbed{embed},
+				Content:    content,
+				Embeds:     []*discordgo.MessageEmbed{embed},
+				Components: components,
 			})
 		} else {
 			// Success - send confirmation in command channel
@@ -182,8 +202,164 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 	} else {
 		// No notification channel configured - post in command channel
 		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Content: content,
-			Embeds:  []*discordgo.MessageEmbed{embed},
+			Content:    content,
+			Embeds:     []*discordgo.MessageEmbed{embed},
+			Components: components,
 		})
 	}
+}
+
+// HandleParticipateInMass handles mass event participation button clicks
+func (sc *SchedulableCommands) HandleParticipateInMass(s *discordgo.Session, i *discordgo.InteractionCreate, discordEventID string) {
+	ctx := context.Background()
+
+	// Defer the response
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		log.Printf("Error deferring response: %v", err)
+		return
+	}
+
+	// Check if user has linked RSN
+	userID, err := strconv.ParseInt(i.Member.User.ID, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing user ID: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to parse user ID."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	accountLink, err := sc.DB.GetAccountLinkByDiscordID(ctx, userID)
+	if err != nil {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("You must link your RuneScape account first! Use `/link-rsn` to get started."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Get event from database using Discord event ID
+	event, err := sc.DB.GetSchedulableEventByDiscordID(ctx, discordEventID)
+	if err != nil {
+		log.Printf("Error getting event: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Event not found. Please try again."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Check if already registered
+	_, err = sc.DB.GetSchedulableParticipation(ctx, database.GetSchedulableParticipationParams{
+		EventID:       event.ID,
+		AccountLinkID: accountLink.ID,
+	})
+	if err == nil {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("You're already registered for this event!"),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Register for event
+	_, err = sc.DB.CreateSchedulableParticipation(ctx, database.CreateSchedulableParticipationParams{
+		EventID:       event.ID,
+		AccountLinkID: accountLink.ID,
+		Notified:      false,
+	})
+	if err != nil {
+		log.Printf("Error registering for event: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to register for event. Please try again."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Embeds: []*discordgo.MessageEmbed{
+			embeds.SuccessEmbed(fmt.Sprintf("You're registered for **%s**!\n\nYou'll receive a reminder before the event starts.", event.Activity)),
+		},
+		Flags: discordgo.MessageFlagsEphemeral,
+	})
+}
+
+// HandleListParticipantsMass handles listing mass event participants
+func (sc *SchedulableCommands) HandleListParticipantsMass(s *discordgo.Session, i *discordgo.InteractionCreate, discordEventID string) {
+	ctx := context.Background()
+
+	// Defer the response
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		log.Printf("Error deferring response: %v", err)
+		return
+	}
+
+	// Get event from database
+	event, err := sc.DB.GetSchedulableEventByDiscordID(ctx, discordEventID)
+	if err != nil {
+		log.Printf("Error getting event: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Event not found."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Get participants
+	participants, err := sc.DB.GetSchedulableParticipationsByEvent(ctx, event.ID)
+	if err != nil {
+		log.Printf("Error getting participants: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to get participant list."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	if len(participants) == 0 {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Content: fmt.Sprintf("**%s**\n\nNo participants yet. Be the first to register!", event.Activity),
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Build participant list
+	participantList := ""
+	for i, p := range participants {
+		participantList += fmt.Sprintf("%d. <@%d> - %s\n", i+1, p.DiscordMemberID, p.RunescapeName)
+	}
+
+	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content: fmt.Sprintf("**%s - Participants (%d)**\n\n%s", event.Activity, len(participants), participantList),
+		Flags:   discordgo.MessageFlagsEphemeral,
+	})
 }

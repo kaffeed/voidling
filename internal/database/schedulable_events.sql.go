@@ -84,6 +84,28 @@ func (q *Queries) DeleteSchedulableEvent(ctx context.Context, id int64) error {
 	return err
 }
 
+const getSchedulableEventByDiscordID = `-- name: GetSchedulableEventByDiscordID :one
+SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
+WHERE discord_event_id = ?
+LIMIT 1
+`
+
+func (q *Queries) GetSchedulableEventByDiscordID(ctx context.Context, discordEventID string) (SchedulableEvent, error) {
+	row := q.db.QueryRowContext(ctx, getSchedulableEventByDiscordID, discordEventID)
+	var i SchedulableEvent
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.Activity,
+		&i.Location,
+		&i.ScheduledAt,
+		&i.CreatedAt,
+		&i.DiscordEventID,
+		&i.Timezone,
+	)
+	return i, err
+}
+
 const getSchedulableEventByID = `-- name: GetSchedulableEventByID :one
 SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
 WHERE id = ?
