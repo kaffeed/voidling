@@ -16,7 +16,7 @@ go.work
 
 # Binary
 voidling
-cmd/voidling/voidling
+# cmd/voidling/voidling
 
 # Database
 *.db
