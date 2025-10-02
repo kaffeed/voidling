@@ -8,13 +8,40 @@ This guide covers deploying the voidling Discord bot on an Ubuntu server with au
 - `sudo` access
 - Go 1.24.1 or higher (optional, if building on server)
 
-## Option 1: Deploy Pre-built Binary (Recommended)
+## Option 1: Build on Ubuntu Server (Recommended)
 
-### Step 1: Build the Binary Locally
+Since the bot uses SQLite which requires CGO, the easiest approach is to build directly on the Linux server.
 
-On your development machine:
+**Skip to [Option 2: Build on Server](#option-2-build-on-server)** (recommended)
+
+## Option 1-Alt: Cross-Compile from Windows/Mac (Advanced)
+
+Cross-compiling with CGO is complex and requires installing cross-compilation toolchains.
+
+### On Windows (using WSL2)
 
 ```bash
+# Install WSL2 if not already installed
+wsl --install
+
+# Inside WSL2
+sudo apt update
+sudo apt install build-essential gcc -y
+
+# Clone and build
+git clone https://github.com/kaffeed/voidling.git
+cd voidling
+make build-linux
+
+# Binary will be in build/voidling
+```
+
+### On macOS
+
+```bash
+# Install cross-compilation tools
+brew install FiloSottile/musl-cross/musl-cross
+
 # Build for Linux
 make build-linux
 
@@ -69,10 +96,17 @@ If it starts successfully, press `Ctrl+C` and proceed to set up systemd.
 
 ## Option 2: Build on Server
 
-### Step 1: Install Go on Ubuntu
+### Step 1: Install Dependencies
 
 ```bash
-# Download Go (check for latest version)
+# Update system
+sudo apt update
+sudo apt upgrade -y
+
+# Install build tools (REQUIRED for CGO/SQLite)
+sudo apt install build-essential gcc git -y
+
+# Download Go (check for latest version at https://go.dev/dl/)
 wget https://go.dev/dl/go1.24.1.linux-amd64.tar.gz
 
 # Remove old Go installation (if exists)
@@ -84,6 +118,9 @@ sudo tar -C /usr/local -xzf go1.24.1.linux-amd64.tar.gz
 # Add to PATH (add to ~/.bashrc for persistence)
 export PATH=$PATH:/usr/local/go/bin
 echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+
+# Apply changes
+source ~/.bashrc
 
 # Verify installation
 go version

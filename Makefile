@@ -48,10 +48,11 @@ build-windows:
 	GOOS=windows GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_WINDOWS) $(CMD_PATH)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_WINDOWS)"
 
-## build-linux: Build for Linux (amd64)
+## build-linux: Build for Linux (amd64) with CGO enabled for SQLite
 build-linux:
-	@echo "Building for Linux..."
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_UNIX) $(CMD_PATH)
+	@echo "Building for Linux with CGO..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_UNIX) $(CMD_PATH)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_UNIX)"
 
 ## build-darwin: Build for macOS (amd64 and arm64)
