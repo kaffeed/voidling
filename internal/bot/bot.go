@@ -312,6 +312,19 @@ func (b *Bot) registerCommands() error {
 						},
 					},
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "set-event-notification-role",
+					Description: "Set the role to ping when events (BOTW, SOTW, Mass) are created",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionRole,
+							Name:        "role",
+							Description: "The role to ping for event notifications",
+							Required:    true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -449,6 +462,8 @@ func (b *Bot) handleConfigCommand(s *discordgo.Session, i *discordgo.Interaction
 		b.configCmds.HandleSetDefaultTimezone(s, i)
 	case "set-my-timezone":
 		b.configCmds.HandleSetMyTimezone(s, i)
+	case "set-event-notification-role":
+		b.configCmds.HandleSetEventNotificationRole(s, i)
 	default:
 		log.Printf("Unknown config subcommand: %s", subcommand)
 	}

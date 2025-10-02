@@ -13,7 +13,7 @@ import (
 const createGuildConfig = `-- name: CreateGuildConfig :one
 INSERT INTO guild_config (guild_id, coordinator_role_id)
 VALUES (?, ?)
-RETURNING id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone
+RETURNING id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id
 `
 
 type CreateGuildConfigParams struct {
@@ -32,12 +32,13 @@ func (q *Queries) CreateGuildConfig(ctx context.Context, arg CreateGuildConfigPa
 		&i.UpdatedAt,
 		&i.CompetitionCodeChannelID,
 		&i.DefaultTimezone,
+		&i.EventNotificationRoleID,
 	)
 	return i, err
 }
 
 const getGuildConfig = `-- name: GetGuildConfig :one
-SELECT id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone FROM guild_config
+SELECT id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id FROM guild_config
 WHERE guild_id = ?
 LIMIT 1
 `
@@ -53,6 +54,7 @@ func (q *Queries) GetGuildConfig(ctx context.Context, guildID int64) (GuildConfi
 		&i.UpdatedAt,
 		&i.CompetitionCodeChannelID,
 		&i.DefaultTimezone,
+		&i.EventNotificationRoleID,
 	)
 	return i, err
 }
@@ -105,13 +107,30 @@ func (q *Queries) UpdateDefaultTimezone(ctx context.Context, arg UpdateDefaultTi
 	return err
 }
 
+const updateEventNotificationRole = `-- name: UpdateEventNotificationRole :exec
+UPDATE guild_config
+SET event_notification_role_id = ?, updated_at = CURRENT_TIMESTAMP
+WHERE guild_id = ?
+`
+
+type UpdateEventNotificationRoleParams struct {
+	EventNotificationRoleID sql.NullInt64 `json:"event_notification_role_id"`
+	GuildID                 int64         `json:"guild_id"`
+}
+
+func (q *Queries) UpdateEventNotificationRole(ctx context.Context, arg UpdateEventNotificationRoleParams) error {
+	_, err := q.db.ExecContext(ctx, updateEventNotificationRole, arg.EventNotificationRoleID, arg.GuildID)
+	return err
+}
+
 const upsertGuildConfig = `-- name: UpsertGuildConfig :exec
-INSERT INTO guild_config (guild_id, coordinator_role_id, competition_code_channel_id, default_timezone)
-VALUES (?, ?, ?, ?)
+INSERT INTO guild_config (guild_id, coordinator_role_id, competition_code_channel_id, default_timezone, event_notification_role_id)
+VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(guild_id) DO UPDATE SET
     coordinator_role_id = excluded.coordinator_role_id,
     competition_code_channel_id = excluded.competition_code_channel_id,
     default_timezone = excluded.default_timezone,
+    event_notification_role_id = excluded.event_notification_role_id,
     updated_at = CURRENT_TIMESTAMP
 `
 
@@ -120,6 +139,7 @@ type UpsertGuildConfigParams struct {
 	CoordinatorRoleID        sql.NullInt64  `json:"coordinator_role_id"`
 	CompetitionCodeChannelID sql.NullInt64  `json:"competition_code_channel_id"`
 	DefaultTimezone          sql.NullString `json:"default_timezone"`
+	EventNotificationRoleID  sql.NullInt64  `json:"event_notification_role_id"`
 }
 
 func (q *Queries) UpsertGuildConfig(ctx context.Context, arg UpsertGuildConfigParams) error {
@@ -128,6 +148,7 @@ func (q *Queries) UpsertGuildConfig(ctx context.Context, arg UpsertGuildConfigPa
 		arg.CoordinatorRoleID,
 		arg.CompetitionCodeChannelID,
 		arg.DefaultTimezone,
+		arg.EventNotificationRoleID,
 	)
 	return err
 }

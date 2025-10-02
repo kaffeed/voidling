@@ -149,8 +149,17 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 		},
 	}
 
+	// Get notification role if configured
+	content := ""
+	guildIDInt, _ := strconv.ParseInt(i.GuildID, 10, 64)
+	guildConfig, err := t.DB.GetGuildConfig(ctx, guildIDInt)
+	if err == nil && guildConfig.EventNotificationRoleID.Valid {
+		content = fmt.Sprintf("<@&%d>", guildConfig.EventNotificationRoleID.Int64)
+	}
+
 	// Send event announcement
 	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content:    content,
 		Embeds:     []*discordgo.MessageEmbed{embed},
 		Components: components,
 	})

@@ -237,6 +237,7 @@ tx.Commit()
 - `/config set-coordinator-role` - Set coordinator role
 - `/config set-competition-code-channel` - Set WOM code channel
 - `/config set-default-timezone` - Set server default timezone
+- `/config set-event-notification-role` - Set role to ping when events are created
 - `/config show` - Show current configuration
 
 ## Migration from TopezEventBot

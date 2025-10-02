@@ -135,7 +135,7 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 
 	// Store event in database with timezone
 	_, err = sc.DB.CreateSchedulableEvent(ctx, database.CreateSchedulableEventParams{
-		Type:           "MASS",
+		Type:           "Mass",
 		Activity:       activity,
 		Location:       location,
 		ScheduledAt:    scheduledTime,
@@ -147,8 +147,16 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 		// Event created in Discord, but failed to store - not critical
 	}
 
+	// Get notification role if configured
+	content := ""
+	guildConfig, err := sc.DB.GetGuildConfig(ctx, guildID)
+	if err == nil && guildConfig.EventNotificationRoleID.Valid {
+		content = fmt.Sprintf("<@&%d>", guildConfig.EventNotificationRoleID.Int64)
+	}
+
 	// Send confirmation
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content: content,
 		Embeds: []*discordgo.MessageEmbed{
 			embeds.MassEventWithTimezone(activity, location, scheduledTime, tz),
 		},

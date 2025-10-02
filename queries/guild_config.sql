@@ -14,12 +14,13 @@ SET coordinator_role_id = ?, updated_at = CURRENT_TIMESTAMP
 WHERE guild_id = ?;
 
 -- name: UpsertGuildConfig :exec
-INSERT INTO guild_config (guild_id, coordinator_role_id, competition_code_channel_id, default_timezone)
-VALUES (?, ?, ?, ?)
+INSERT INTO guild_config (guild_id, coordinator_role_id, competition_code_channel_id, default_timezone, event_notification_role_id)
+VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(guild_id) DO UPDATE SET
     coordinator_role_id = excluded.coordinator_role_id,
     competition_code_channel_id = excluded.competition_code_channel_id,
     default_timezone = excluded.default_timezone,
+    event_notification_role_id = excluded.event_notification_role_id,
     updated_at = CURRENT_TIMESTAMP;
 
 -- name: UpdateCompetitionCodeChannel :exec
@@ -30,4 +31,9 @@ WHERE guild_id = ?;
 -- name: UpdateDefaultTimezone :exec
 UPDATE guild_config
 SET default_timezone = ?, updated_at = CURRENT_TIMESTAMP
+WHERE guild_id = ?;
+
+-- name: UpdateEventNotificationRole :exec
+UPDATE guild_config
+SET event_notification_role_id = ?, updated_at = CURRENT_TIMESTAMP
 WHERE guild_id = ?;

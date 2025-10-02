@@ -13,7 +13,9 @@
       "Bash(git log:*)",
       "Bash(git reset:*)",
       "WebSearch",
-      "WebFetch(domain:oldschool.runescape.wiki)"
+      "WebFetch(domain:oldschool.runescape.wiki)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot\\"

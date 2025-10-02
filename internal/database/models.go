@@ -26,6 +26,7 @@ type GuildConfig struct {
 	UpdatedAt                time.Time      `json:"updated_at"`
 	CompetitionCodeChannelID sql.NullInt64  `json:"competition_code_channel_id"`
 	DefaultTimezone          sql.NullString `json:"default_timezone"`
+	EventNotificationRoleID  sql.NullInt64  `json:"event_notification_role_id"`
 }
 
 type GuildWarningChannel struct {
