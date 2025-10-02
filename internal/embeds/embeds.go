@@ -433,10 +433,34 @@ func MassEventWithTimezone(activity, location string, scheduledTime time.Time, t
 	// Format activity name for display (convert snake_case to Title Case)
 	displayName := formatActivityName(activity)
 
+	// Get boss info if available
+	bossInfo, hasBossInfo := GetBossInfo(activity)
+
+	description := fmt.Sprintf("**Location:** %s\n\n**Time:** %s\n**Starts:** %s\n\n", location, discordTimestamp, relativeTime)
+
+	// Add boss description if available
+	if hasBossInfo {
+		description += fmt.Sprintf("*%s*\n\n", bossInfo.Description)
+	}
+
+	description += "**📢 Important:** Click the \"I'll Participate\" button below to register for this event! This helps us plan and you'll get a reminder before the event starts."
+
+	fields := []*discordgo.MessageEmbedField{}
+
+	// Add strategy guide link if available
+	if hasBossInfo {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   "📖 Strategy Guide",
+			Value:  fmt.Sprintf("[OSRS Wiki - %s Strategy](%s)", displayName, bossInfo.WikiURL),
+			Inline: false,
+		})
+	}
+
 	return &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("⚔️ Mass Event: %s", displayName),
-		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s\n**Starts:** %s\n\n**📢 Important:** Click the \"I'll Participate\" button below to register for this event! This helps us plan and you'll get a reminder before the event starts.", location, discordTimestamp, relativeTime),
+		Description: description,
 		Color:       ColorMass,
+		Fields:      fields,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: getBossImageURL(activity),
 		},
