@@ -156,16 +156,9 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 
 	embed := embeds.MassEventWithTimezone(activity, location, scheduledTime, tz)
 
-	// Send confirmation as followup (in command channel)
-	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-		Content: content,
-		Embeds: []*discordgo.MessageEmbed{
-			embed,
-		},
-	})
-
-	// Also post to event notification channel if configured
+	// If notification channel is configured, post there. Otherwise post in command channel
 	if err == nil && guildConfig.EventNotificationChannelID.Valid {
+		// Post to event notification channel
 		notificationChannelID := strconv.FormatInt(guildConfig.EventNotificationChannelID.Int64, 10)
 		_, err = s.ChannelMessageSendComplex(notificationChannelID, &discordgo.MessageSend{
 			Content: content,
@@ -173,7 +166,24 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 		})
 		if err != nil {
 			log.Printf("Error posting to event notification channel: %v", err)
-			// Not critical - don't fail the command
+			// Fallback to command channel on error
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Content: content,
+				Embeds:  []*discordgo.MessageEmbed{embed},
+			})
+		} else {
+			// Success - send confirmation in command channel
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Embeds: []*discordgo.MessageEmbed{
+					embeds.SuccessEmbed(fmt.Sprintf("Event created! Check <#%s> for details.", notificationChannelID)),
+				},
+			})
 		}
+	} else {
+		// No notification channel configured - post in command channel
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Content: content,
+			Embeds:  []*discordgo.MessageEmbed{embed},
+		})
 	}
 }

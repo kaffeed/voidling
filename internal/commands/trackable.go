@@ -157,19 +157,9 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 		content = fmt.Sprintf("<@&%d>", guildConfig.EventNotificationRoleID.Int64)
 	}
 
-	// Send event announcement as followup (in the command channel)
-	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-		Content:    content,
-		Embeds:     []*discordgo.MessageEmbed{embed},
-		Components: components,
-	})
-	if err != nil {
-		log.Printf("Error sending event announcement: %v", err)
-		return err
-	}
-
-	// Also post to event notification channel if configured
-	if guildConfig.EventNotificationChannelID.Valid {
+	// If notification channel is configured, post there. Otherwise post in command channel
+	if err == nil && guildConfig.EventNotificationChannelID.Valid {
+		// Post to event notification channel
 		notificationChannelID := strconv.FormatInt(guildConfig.EventNotificationChannelID.Int64, 10)
 		_, err = s.ChannelMessageSendComplex(notificationChannelID, &discordgo.MessageSend{
 			Content:    content,
@@ -178,7 +168,30 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 		})
 		if err != nil {
 			log.Printf("Error posting to event notification channel: %v", err)
-			// Not critical - don't fail the command
+			// Fallback to command channel on error
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Content:    content,
+				Embeds:     []*discordgo.MessageEmbed{embed},
+				Components: components,
+			})
+		} else {
+			// Success - send confirmation in command channel
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Embeds: []*discordgo.MessageEmbed{
+					embeds.SuccessEmbed(fmt.Sprintf("Event created! Check <#%s> for details.", notificationChannelID)),
+				},
+			})
+		}
+	} else {
+		// No notification channel configured - post in command channel
+		_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Content:    content,
+			Embeds:     []*discordgo.MessageEmbed{embed},
+			Components: components,
+		})
+		if err != nil {
+			log.Printf("Error sending event announcement: %v", err)
+			return err
 		}
 	}
 

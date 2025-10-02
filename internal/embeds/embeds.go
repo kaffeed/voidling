@@ -125,20 +125,44 @@ func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 // BossOfTheWeek creates an embed for Boss of the Week events
 func BossOfTheWeek(activity models.HiscoreField, womCompetitionID int64) *discordgo.MessageEmbed {
 	womURL := fmt.Sprintf("https://wiseoldman.net/competitions/%d", womCompetitionID)
+
+	// Get boss info if available
+	bossInfo, hasBossInfo := GetBossInfo(string(activity))
+
+	description := fmt.Sprintf("This week's boss challenge: **%s**\n\n", activity)
+
+	// Add boss description if available
+	if hasBossInfo {
+		description += fmt.Sprintf("*%s*\n\n", bossInfo.Description)
+	}
+
+	description += fmt.Sprintf("[View Competition on Wise Old Man](%s)\n\nClick the button below to register and track your kill count!", womURL)
+
+	fields := []*discordgo.MessageEmbedField{
+		{
+			Name:   "How it works",
+			Value:  "Register to lock in your starting KC. At the end of the week, we'll check your progress and crown the winner!",
+			Inline: false,
+		},
+	}
+
+	// Add strategy guide link if available
+	if hasBossInfo {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   "📖 Strategy Guide",
+			Value:  fmt.Sprintf("[OSRS Wiki - %s Strategy](%s)", activity, bossInfo.WikiURL),
+			Inline: false,
+		})
+	}
+
 	return &discordgo.MessageEmbed{
 		Title:       "🏆 Boss of the Week",
-		Description: fmt.Sprintf("This week's boss challenge: **%s**\n\n[View Competition on Wise Old Man](%s)\n\nClick the button below to register and track your kill count!", activity, womURL),
+		Description: description,
 		Color:       ColorBOTW,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: "https://oldschool.runescape.wiki/images/OSRS_icon.png",
 		},
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "How it works",
-				Value:  "Register to lock in your starting KC. At the end of the week, we'll check your progress and crown the winner!",
-				Inline: false,
-			},
-		},
+		Fields:    fields,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 }
