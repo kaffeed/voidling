@@ -1,6 +1,6 @@
 -- name: CreateSchedulableEvent :one
-INSERT INTO schedulable_events (type, activity, location, scheduled_at, discord_event_id)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO schedulable_events (type, activity, location, scheduled_at, discord_event_id, timezone)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetSchedulableEventByID :one

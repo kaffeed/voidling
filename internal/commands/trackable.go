@@ -64,7 +64,8 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 
 	// Create WOM competition
 	// Competition runs for 1 week starting 1 minute from now (WOM requires future dates)
-	startsAt := time.Now().Add(1 * time.Minute)
+	// Use UTC for WOM API
+	startsAt := time.Now().UTC().Add(1 * time.Minute)
 	endsAt := startsAt.Add(7 * 24 * time.Hour)
 
 	womResp, err := t.WOMClient.CreateCompetition(ctx, wiseoldman.CreateCompetitionRequest{
@@ -100,6 +101,14 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 			},
 		})
 		return err
+	}
+
+	// Send competition code to configured channel (if configured)
+	guildID, err := strconv.ParseInt(i.GuildID, 10, 64)
+	if err == nil {
+		t.SendCompetitionCode(s, guildID, eventName, womResp.VerificationCode, womResp.Competition.ID)
+	} else {
+		log.Printf("Error parsing guild ID for competition code notification: %v", err)
 	}
 
 	// Send starter message in thread with WOM link
@@ -151,6 +160,40 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 	}
 
 	return nil
+}
+
+// SendCompetitionCode sends the WOM verification code to the configured channel
+func (t *TrackableCommands) SendCompetitionCode(s *discordgo.Session, guildID int64, eventName string, verificationCode string, competitionID int64) {
+	ctx := context.Background()
+
+	// Get guild config to find competition code channel
+	config, err := t.DB.GetGuildConfig(ctx, guildID)
+	if err != nil {
+		// No config or channel not configured - silently skip (not an error)
+		log.Printf("No guild config found for guild %d, skipping competition code notification", guildID)
+		return
+	}
+
+	if !config.CompetitionCodeChannelID.Valid {
+		// Channel not configured - silently skip
+		log.Printf("Competition code channel not configured for guild %d", guildID)
+		return
+	}
+
+	channelID := strconv.FormatInt(config.CompetitionCodeChannelID.Int64, 10)
+
+	// Create embed with competition code
+	embed := embeds.CompetitionCodeEmbed(eventName, verificationCode, competitionID)
+
+	// Send to configured channel
+	_, err = s.ChannelMessageSendEmbed(channelID, embed)
+	if err != nil {
+		// Log error but don't fail event creation
+		log.Printf("Error sending competition code to channel %s: %v", channelID, err)
+		return
+	}
+
+	log.Printf("Successfully sent competition code for '%s' to channel %s", eventName, channelID)
 }
 
 // RegisterForEvent handles registration button clicks

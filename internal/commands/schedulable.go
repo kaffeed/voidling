@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/kaffeed/voidbound/internal/database"
 	"github.com/kaffeed/voidbound/internal/embeds"
+	"github.com/kaffeed/voidbound/internal/timezone"
 )
 
 // SchedulableCommands handles Mass and Wildy Wednesday event commands
@@ -24,6 +26,31 @@ func NewSchedulableCommands(db *database.Queries, dbSQL *sql.DB) *SchedulableCom
 		DB:    db,
 		DBSQL: dbSQL,
 	}
+}
+
+// getEffectiveTimezone returns the timezone to use: param > user pref > guild default > UTC
+func (sc *SchedulableCommands) getEffectiveTimezone(ctx context.Context, guildID, userID int64, paramTZ string) string {
+	// 1. If timezone parameter provided, use it
+	if paramTZ != "" {
+		if err := timezone.ValidateTimezone(paramTZ); err == nil {
+			return paramTZ
+		}
+	}
+
+	// 2. Try user preference
+	userPref, err := sc.DB.GetUserTimezone(ctx, userID)
+	if err == nil {
+		return userPref.Timezone
+	}
+
+	// 3. Try guild default
+	guildConfig, err := sc.DB.GetGuildConfig(ctx, guildID)
+	if err == nil && guildConfig.DefaultTimezone.Valid {
+		return guildConfig.DefaultTimezone.String
+	}
+
+	// 4. Fallback to UTC
+	return "UTC"
 }
 
 // HandleMassEvent handles /mass command
@@ -41,13 +68,24 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 
 	// Get options
 	options := i.ApplicationCommandData().Options
-	activity := options[0].StringValue()  // e.g., "Corporeal Beast", "Nex"
-	location := options[1].StringValue()  // e.g., "World 444"
-	timeStr := options[2].StringValue()   // e.g., "2025-01-15 20:00"
-	durationMinutes := options[3].IntValue() // e.g., 60, 120
+	activity := options[0].StringValue()       // e.g., "Corporeal Beast", "Nex"
+	location := options[1].StringValue()       // e.g., "World 444"
+	timeStr := options[2].StringValue()        // e.g., "2025-01-15 20:00"
+	durationMinutes := options[3].IntValue()   // e.g., 60, 120
+	var timezoneParam string
+	if len(options) > 4 {
+		timezoneParam = options[4].StringValue() // Optional timezone
+	}
 
-	// Parse time
-	scheduledTime, err := time.Parse("2006-01-02 15:04", timeStr)
+	// Parse IDs
+	guildID, _ := strconv.ParseInt(i.GuildID, 10, 64)
+	userID, _ := strconv.ParseInt(i.Member.User.ID, 10, 64)
+
+	// Get effective timezone
+	tz := sc.getEffectiveTimezone(ctx, guildID, userID, timezoneParam)
+
+	// Parse time in the specified timezone
+	scheduledTime, err := timezone.ParseInTimezone(timeStr, tz)
 	if err != nil {
 		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
@@ -95,13 +133,14 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 		return
 	}
 
-	// Store event in database
+	// Store event in database with timezone
 	_, err = sc.DB.CreateSchedulableEvent(ctx, database.CreateSchedulableEventParams{
 		Type:           "MASS",
 		Activity:       activity,
 		Location:       location,
 		ScheduledAt:    scheduledTime,
 		DiscordEventID: discordEvent.ID,
+		Timezone:       sql.NullString{String: tz, Valid: true},
 	})
 	if err != nil {
 		log.Printf("Error storing event in database: %v", err)
@@ -111,8 +150,7 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 	// Send confirmation
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{
-			embeds.MassEvent(activity, location, scheduledTime),
+			embeds.MassEventWithTimezone(activity, location, scheduledTime, tz),
 		},
 	})
 }
-

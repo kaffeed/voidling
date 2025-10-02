@@ -8,7 +8,9 @@
       "mcp__context7__resolve-library-id",
       "WebFetch(domain:github.com)",
       "Bash(curl:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(make:*)",
+      "Bash(git log:*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\s.schubert\\source\\personal\\TopezEventBot\\"

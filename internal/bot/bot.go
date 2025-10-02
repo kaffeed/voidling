@@ -12,6 +12,7 @@ import (
 	"github.com/kaffeed/voidbound/internal/commands"
 	"github.com/kaffeed/voidbound/internal/database"
 	"github.com/kaffeed/voidbound/internal/models"
+	"github.com/kaffeed/voidbound/internal/timezone"
 	"github.com/kaffeed/voidbound/internal/wiseoldman"
 )
 
@@ -235,6 +236,13 @@ func (b *Bot) registerCommands() error {
 					Description: "Event duration in minutes (e.g., 60, 120)",
 					Required:    true,
 				},
+				{
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "timezone",
+					Description:  "Timezone for the event time (optional, uses your preference or server default)",
+					Required:     false,
+					Autocomplete: true,
+				},
 			},
 		},
 		{
@@ -258,6 +266,50 @@ func (b *Bot) registerCommands() error {
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "show",
 					Description: "Show current server configuration",
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "set-competition-code-channel",
+					Description: "Set the channel to send competition verification codes to",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionChannel,
+							Name:        "channel",
+							Description: "The channel to send competition codes to",
+							Required:    true,
+							ChannelTypes: []discordgo.ChannelType{
+								discordgo.ChannelTypeGuildText,
+							},
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "set-default-timezone",
+					Description: "Set the default timezone for this server",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:         discordgo.ApplicationCommandOptionString,
+							Name:         "timezone",
+							Description:  "Timezone to use as server default (e.g., America/New_York)",
+							Required:     true,
+							Autocomplete: true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "set-my-timezone",
+					Description: "Set your personal timezone preference",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:         discordgo.ApplicationCommandOptionString,
+							Name:         "timezone",
+							Description:  "Your preferred timezone (e.g., America/New_York)",
+							Required:     true,
+							Autocomplete: true,
+						},
+					},
 				},
 			},
 		},
@@ -295,6 +347,7 @@ func (b *Bot) unregisterCommands() error {
 		if err != nil {
 			log.Printf("Failed to delete command %s: %v", cmd.Name, err)
 		}
+		log.Printf("Removed cmd %s", cmd.Name)
 	}
 
 	return nil
@@ -389,6 +442,12 @@ func (b *Bot) handleConfigCommand(s *discordgo.Session, i *discordgo.Interaction
 		b.configCmds.HandleSetCoordinatorRole(s, i)
 	case "show":
 		b.configCmds.HandleShowConfig(s, i)
+	case "set-competition-code-channel":
+		b.configCmds.HandleSetCompetitionCodeChannel(s, i)
+	case "set-default-timezone":
+		b.configCmds.HandleSetDefaultTimezone(s, i)
+	case "set-my-timezone":
+		b.configCmds.HandleSetMyTimezone(s, i)
 	default:
 		log.Printf("Unknown config subcommand: %s", subcommand)
 	}
@@ -401,6 +460,8 @@ func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionC
 		if handler, ok := b.handlers[i.ApplicationCommandData().Name]; ok {
 			handler(s, i)
 		}
+	case discordgo.InteractionApplicationCommandAutocomplete:
+		b.handleTimezoneAutocomplete(s, i)
 	case discordgo.InteractionMessageComponent:
 		b.handleComponentInteraction(s, i)
 	case discordgo.InteractionModalSubmit:
@@ -492,5 +553,54 @@ func (b *Bot) handleModalSubmit(s *discordgo.Session, i *discordgo.InteractionCr
 		b.registerCmds.HandleLinkRSNModal(s, i)
 	default:
 		log.Printf("Unknown modal submit: %s", customID)
+	}
+}
+
+// handleTimezoneAutocomplete handles timezone autocomplete
+func (b *Bot) handleTimezoneAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	data := i.ApplicationCommandData()
+	var focusedOption *discordgo.ApplicationCommandInteractionDataOption
+
+	// Find the focused option
+	for _, opt := range data.Options {
+		if opt.Focused {
+			focusedOption = opt
+			break
+		}
+		// Check subcommand options
+		for _, subOpt := range opt.Options {
+			if subOpt.Focused {
+				focusedOption = subOpt
+				break
+			}
+		}
+	}
+
+	if focusedOption == nil {
+		return
+	}
+
+	// Search timezones based on user input
+	query := focusedOption.StringValue()
+	matches := timezone.SearchTimezones(query)
+
+	// Convert to Discord choices
+	choices := make([]*discordgo.ApplicationCommandOptionChoice, 0, len(matches))
+	for _, tz := range matches {
+		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  tz,
+			Value: tz,
+		})
+	}
+
+	// Respond with filtered choices
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	})
+	if err != nil {
+		log.Printf("Error responding to autocomplete: %v", err)
 	}
 }

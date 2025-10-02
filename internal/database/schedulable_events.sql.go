@@ -7,21 +7,23 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 const createSchedulableEvent = `-- name: CreateSchedulableEvent :one
-INSERT INTO schedulable_events (type, activity, location, scheduled_at, discord_event_id)
-VALUES (?, ?, ?, ?, ?)
-RETURNING id, type, activity, location, scheduled_at, created_at, discord_event_id
+INSERT INTO schedulable_events (type, activity, location, scheduled_at, discord_event_id, timezone)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone
 `
 
 type CreateSchedulableEventParams struct {
-	Type           string    `json:"type"`
-	Activity       string    `json:"activity"`
-	Location       string    `json:"location"`
-	ScheduledAt    time.Time `json:"scheduled_at"`
-	DiscordEventID string    `json:"discord_event_id"`
+	Type           string         `json:"type"`
+	Activity       string         `json:"activity"`
+	Location       string         `json:"location"`
+	ScheduledAt    time.Time      `json:"scheduled_at"`
+	DiscordEventID string         `json:"discord_event_id"`
+	Timezone       sql.NullString `json:"timezone"`
 }
 
 func (q *Queries) CreateSchedulableEvent(ctx context.Context, arg CreateSchedulableEventParams) (SchedulableEvent, error) {
@@ -31,6 +33,7 @@ func (q *Queries) CreateSchedulableEvent(ctx context.Context, arg CreateSchedula
 		arg.Location,
 		arg.ScheduledAt,
 		arg.DiscordEventID,
+		arg.Timezone,
 	)
 	var i SchedulableEvent
 	err := row.Scan(
@@ -41,6 +44,7 @@ func (q *Queries) CreateSchedulableEvent(ctx context.Context, arg CreateSchedula
 		&i.ScheduledAt,
 		&i.CreatedAt,
 		&i.DiscordEventID,
+		&i.Timezone,
 	)
 	return i, err
 }
@@ -81,7 +85,7 @@ func (q *Queries) DeleteSchedulableEvent(ctx context.Context, id int64) error {
 }
 
 const getSchedulableEventByID = `-- name: GetSchedulableEventByID :one
-SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id FROM schedulable_events
+SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
 WHERE id = ?
 LIMIT 1
 `
@@ -97,12 +101,13 @@ func (q *Queries) GetSchedulableEventByID(ctx context.Context, id int64) (Schedu
 		&i.ScheduledAt,
 		&i.CreatedAt,
 		&i.DiscordEventID,
+		&i.Timezone,
 	)
 	return i, err
 }
 
 const getSchedulableEvents = `-- name: GetSchedulableEvents :many
-SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id FROM schedulable_events
+SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
 ORDER BY scheduled_at DESC
 `
 
@@ -123,6 +128,7 @@ func (q *Queries) GetSchedulableEvents(ctx context.Context) ([]SchedulableEvent,
 			&i.ScheduledAt,
 			&i.CreatedAt,
 			&i.DiscordEventID,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -138,7 +144,7 @@ func (q *Queries) GetSchedulableEvents(ctx context.Context) ([]SchedulableEvent,
 }
 
 const getSchedulableEventsInTimeRange = `-- name: GetSchedulableEventsInTimeRange :many
-SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id FROM schedulable_events
+SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
 WHERE scheduled_at >= ? AND scheduled_at < ?
 ORDER BY scheduled_at ASC
 `
@@ -165,6 +171,7 @@ func (q *Queries) GetSchedulableEventsInTimeRange(ctx context.Context, arg GetSc
 			&i.ScheduledAt,
 			&i.CreatedAt,
 			&i.DiscordEventID,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -316,7 +323,7 @@ func (q *Queries) GetUnnotifiedParticipations(ctx context.Context, arg GetUnnoti
 }
 
 const getUpcomingSchedulableEvents = `-- name: GetUpcomingSchedulableEvents :many
-SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id FROM schedulable_events
+SELECT id, type, activity, location, scheduled_at, created_at, discord_event_id, timezone FROM schedulable_events
 WHERE scheduled_at > ?
 ORDER BY scheduled_at ASC
 `
@@ -338,6 +345,7 @@ func (q *Queries) GetUpcomingSchedulableEvents(ctx context.Context, scheduledAt 
 			&i.ScheduledAt,
 			&i.CreatedAt,
 			&i.DiscordEventID,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}

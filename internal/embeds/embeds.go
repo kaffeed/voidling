@@ -301,6 +301,33 @@ func SuccessEmbed(message string) *discordgo.MessageEmbed {
 	}
 }
 
+// CompetitionCodeEmbed creates an embed for WOM competition verification codes
+func CompetitionCodeEmbed(eventName string, verificationCode string, competitionID int64) *discordgo.MessageEmbed {
+	womURL := fmt.Sprintf("https://wiseoldman.net/competitions/%d", competitionID)
+
+	return &discordgo.MessageEmbed{
+		Title:       "🔑 Competition Verification Code",
+		Description: fmt.Sprintf("**%s**", eventName),
+		Color:       ColorBOTW,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Verification Code",
+				Value:  fmt.Sprintf("`%s`", verificationCode),
+				Inline: false,
+			},
+			{
+				Name:   "Wise Old Man Link",
+				Value:  fmt.Sprintf("[View Competition](%s)", womURL),
+				Inline: false,
+			},
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "Use this code to manage the competition on Wise Old Man",
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+}
+
 // WinnerData holds winner information for display
 type WinnerData struct {
 	Username   string
@@ -325,4 +352,24 @@ func formatNumber(n int64) string {
 		result += string(c)
 	}
 	return result
+}
+
+// MassEventWithTimezone creates an embed for mass events with timezone information
+func MassEventWithTimezone(activity, location string, scheduledTime time.Time, timezone string) *discordgo.MessageEmbed {
+	// Get timezone abbreviation
+	tzAbbrev := scheduledTime.Format("MST")
+	
+	// Create Discord timestamp (auto-converts to user's local time)
+	discordTimestamp := fmt.Sprintf("<t:%d:F>", scheduledTime.Unix())
+	relativeTime := fmt.Sprintf("<t:%d:R>", scheduledTime.Unix())
+
+	return &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("Mass Event: %s", activity),
+		Description: fmt.Sprintf("**Location:** %s\n\n**Time:** %s (%s)\n%s", location, discordTimestamp, relativeTime, tzAbbrev),
+		Color:       ColorMass,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Scheduled in %s timezone", timezone),
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
 }

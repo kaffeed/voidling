@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/kaffeed/voidbound/internal/timezone"
+)
 
 // Boss and skill choices for BOTW/SOTW events
 // These map to Wise Old Man API metric names
@@ -212,4 +215,19 @@ func FormatActivityName(activity string) string {
 		}
 	}
 	return result
+}
+
+// TimezoneChoices returns autocomplete choices for common timezones
+func TimezoneChoices() []*discordgo.ApplicationCommandOptionChoice {
+	timezones := timezone.CommonTimezones()
+	choices := make([]*discordgo.ApplicationCommandOptionChoice, 0, len(timezones))
+
+	for _, tz := range timezones {
+		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  tz,
+			Value: tz,
+		})
+	}
+
+	return choices
 }

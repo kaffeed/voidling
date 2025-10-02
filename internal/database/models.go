@@ -19,11 +19,13 @@ type AccountLink struct {
 }
 
 type GuildConfig struct {
-	ID                int64         `json:"id"`
-	GuildID           int64         `json:"guild_id"`
-	CoordinatorRoleID sql.NullInt64 `json:"coordinator_role_id"`
-	CreatedAt         time.Time     `json:"created_at"`
-	UpdatedAt         time.Time     `json:"updated_at"`
+	ID                       int64          `json:"id"`
+	GuildID                  int64          `json:"guild_id"`
+	CoordinatorRoleID        sql.NullInt64  `json:"coordinator_role_id"`
+	CreatedAt                time.Time      `json:"created_at"`
+	UpdatedAt                time.Time      `json:"updated_at"`
+	CompetitionCodeChannelID sql.NullInt64  `json:"competition_code_channel_id"`
+	DefaultTimezone          sql.NullString `json:"default_timezone"`
 }
 
 type GuildWarningChannel struct {
@@ -34,13 +36,14 @@ type GuildWarningChannel struct {
 }
 
 type SchedulableEvent struct {
-	ID             int64     `json:"id"`
-	Type           string    `json:"type"`
-	Activity       string    `json:"activity"`
-	Location       string    `json:"location"`
-	ScheduledAt    time.Time `json:"scheduled_at"`
-	CreatedAt      time.Time `json:"created_at"`
-	DiscordEventID string    `json:"discord_event_id"`
+	ID             int64          `json:"id"`
+	Type           string         `json:"type"`
+	Activity       string         `json:"activity"`
+	Location       string         `json:"location"`
+	ScheduledAt    time.Time      `json:"scheduled_at"`
+	CreatedAt      time.Time      `json:"created_at"`
+	DiscordEventID string         `json:"discord_event_id"`
+	Timezone       sql.NullString `json:"timezone"`
 }
 
 type SchedulableEventParticipation struct {
@@ -73,6 +76,14 @@ type TrackableEventProgress struct {
 	ParticipationID int64     `json:"participation_id"`
 	Progress        int64     `json:"progress"`
 	FetchedAt       time.Time `json:"fetched_at"`
+}
+
+type UserTimezonePreference struct {
+	ID            int64     `json:"id"`
+	DiscordUserID int64     `json:"discord_user_id"`
+	Timezone      string    `json:"timezone"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type Warning struct {

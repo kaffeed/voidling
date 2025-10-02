@@ -18,6 +18,7 @@ type Querier interface {
 	CreateTrackableEvent(ctx context.Context, arg CreateTrackableEventParams) (TrackableEvent, error)
 	CreateTrackableParticipation(ctx context.Context, arg CreateTrackableParticipationParams) (TrackableEventParticipation, error)
 	CreateTrackableProgress(ctx context.Context, arg CreateTrackableProgressParams) error
+	CreateUserTimezone(ctx context.Context, arg CreateUserTimezoneParams) (UserTimezonePreference, error)
 	CreateWOMCompetition(ctx context.Context, arg CreateWOMCompetitionParams) (WomCompetition, error)
 	CreateWarning(ctx context.Context, arg CreateWarningParams) (Warning, error)
 	DeactivateAccountLink(ctx context.Context, id int64) error
@@ -25,6 +26,7 @@ type Querier interface {
 	DeactivateTrackableEvent(ctx context.Context, id int64) error
 	DeleteGuildWarningChannel(ctx context.Context, guildID int64) error
 	DeleteSchedulableEvent(ctx context.Context, id int64) error
+	DeleteUserTimezone(ctx context.Context, discordUserID int64) error
 	DeleteWOMCompetition(ctx context.Context, id int64) error
 	GetAccountLinkByDiscordID(ctx context.Context, discordMemberID int64) (AccountLink, error)
 	GetAccountLinkByID(ctx context.Context, id int64) (AccountLink, error)
@@ -50,6 +52,7 @@ type Querier interface {
 	GetTrackableParticipationsByEvent(ctx context.Context, eventID int64) ([]GetTrackableParticipationsByEventRow, error)
 	GetUnnotifiedParticipations(ctx context.Context, arg GetUnnotifiedParticipationsParams) ([]GetUnnotifiedParticipationsRow, error)
 	GetUpcomingSchedulableEvents(ctx context.Context, scheduledAt time.Time) ([]SchedulableEvent, error)
+	GetUserTimezone(ctx context.Context, discordUserID int64) (UserTimezonePreference, error)
 	GetWOMCompetitionByID(ctx context.Context, id int64) (WomCompetition, error)
 	GetWOMCompetitionByThreadID(ctx context.Context, discordThreadID string) (WomCompetition, error)
 	GetWOMCompetitionByWOMID(ctx context.Context, womCompetitionID int64) (WomCompetition, error)
@@ -59,9 +62,13 @@ type Querier interface {
 	GetWarningsByUser(ctx context.Context, arg GetWarningsByUserParams) ([]Warning, error)
 	MarkParticipationAsNotified(ctx context.Context, id int64) error
 	SetGuildWarningChannel(ctx context.Context, arg SetGuildWarningChannelParams) (GuildWarningChannel, error)
+	UpdateCompetitionCodeChannel(ctx context.Context, arg UpdateCompetitionCodeChannelParams) error
 	UpdateCoordinatorRole(ctx context.Context, arg UpdateCoordinatorRoleParams) error
+	UpdateDefaultTimezone(ctx context.Context, arg UpdateDefaultTimezoneParams) error
 	UpdateTrackableParticipationEndPoint(ctx context.Context, arg UpdateTrackableParticipationEndPointParams) error
+	UpdateUserTimezone(ctx context.Context, arg UpdateUserTimezoneParams) error
 	UpsertGuildConfig(ctx context.Context, arg UpsertGuildConfigParams) error
+	UpsertUserTimezone(ctx context.Context, arg UpsertUserTimezoneParams) error
 }
 
 var _ Querier = (*Queries)(nil)
