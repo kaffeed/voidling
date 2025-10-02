@@ -154,11 +154,26 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 		content = fmt.Sprintf("<@&%d>", guildConfig.EventNotificationRoleID.Int64)
 	}
 
-	// Send confirmation
+	embed := embeds.MassEventWithTimezone(activity, location, scheduledTime, tz)
+
+	// Send confirmation as followup (in command channel)
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content: content,
 		Embeds: []*discordgo.MessageEmbed{
-			embeds.MassEventWithTimezone(activity, location, scheduledTime, tz),
+			embed,
 		},
 	})
+
+	// Also post to event notification channel if configured
+	if err == nil && guildConfig.EventNotificationChannelID.Valid {
+		notificationChannelID := strconv.FormatInt(guildConfig.EventNotificationChannelID.Int64, 10)
+		_, err = s.ChannelMessageSendComplex(notificationChannelID, &discordgo.MessageSend{
+			Content: content,
+			Embeds:  []*discordgo.MessageEmbed{embed},
+		})
+		if err != nil {
+			log.Printf("Error posting to event notification channel: %v", err)
+			// Not critical - don't fail the command
+		}
+	}
 }
