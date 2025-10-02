@@ -65,6 +65,7 @@ type Querier interface {
 	UpdateCompetitionCodeChannel(ctx context.Context, arg UpdateCompetitionCodeChannelParams) error
 	UpdateCoordinatorRole(ctx context.Context, arg UpdateCoordinatorRoleParams) error
 	UpdateDefaultTimezone(ctx context.Context, arg UpdateDefaultTimezoneParams) error
+	UpdateEventNotificationChannel(ctx context.Context, arg UpdateEventNotificationChannelParams) error
 	UpdateEventNotificationRole(ctx context.Context, arg UpdateEventNotificationRoleParams) error
 	UpdateTrackableParticipationEndPoint(ctx context.Context, arg UpdateTrackableParticipationEndPointParams) error
 	UpdateUserTimezone(ctx context.Context, arg UpdateUserTimezoneParams) error

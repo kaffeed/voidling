@@ -19,14 +19,15 @@ type AccountLink struct {
 }
 
 type GuildConfig struct {
-	ID                       int64          `json:"id"`
-	GuildID                  int64          `json:"guild_id"`
-	CoordinatorRoleID        sql.NullInt64  `json:"coordinator_role_id"`
-	CreatedAt                time.Time      `json:"created_at"`
-	UpdatedAt                time.Time      `json:"updated_at"`
-	CompetitionCodeChannelID sql.NullInt64  `json:"competition_code_channel_id"`
-	DefaultTimezone          sql.NullString `json:"default_timezone"`
-	EventNotificationRoleID  sql.NullInt64  `json:"event_notification_role_id"`
+	ID                         int64          `json:"id"`
+	GuildID                    int64          `json:"guild_id"`
+	CoordinatorRoleID          sql.NullInt64  `json:"coordinator_role_id"`
+	CreatedAt                  time.Time      `json:"created_at"`
+	UpdatedAt                  time.Time      `json:"updated_at"`
+	CompetitionCodeChannelID   sql.NullInt64  `json:"competition_code_channel_id"`
+	DefaultTimezone            sql.NullString `json:"default_timezone"`
+	EventNotificationRoleID    sql.NullInt64  `json:"event_notification_role_id"`
+	EventNotificationChannelID sql.NullInt64  `json:"event_notification_channel_id"`
 }
 
 type GuildWarningChannel struct {

@@ -37,3 +37,8 @@ WHERE guild_id = ?;
 UPDATE guild_config
 SET event_notification_role_id = ?, updated_at = CURRENT_TIMESTAMP
 WHERE guild_id = ?;
+
+-- name: UpdateEventNotificationChannel :exec
+UPDATE guild_config
+SET event_notification_channel_id = ?, updated_at = CURRENT_TIMESTAMP
+WHERE guild_id = ?;

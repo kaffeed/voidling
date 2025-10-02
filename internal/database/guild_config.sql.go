@@ -13,7 +13,7 @@ import (
 const createGuildConfig = `-- name: CreateGuildConfig :one
 INSERT INTO guild_config (guild_id, coordinator_role_id)
 VALUES (?, ?)
-RETURNING id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id
+RETURNING id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id, event_notification_channel_id
 `
 
 type CreateGuildConfigParams struct {
@@ -33,12 +33,13 @@ func (q *Queries) CreateGuildConfig(ctx context.Context, arg CreateGuildConfigPa
 		&i.CompetitionCodeChannelID,
 		&i.DefaultTimezone,
 		&i.EventNotificationRoleID,
+		&i.EventNotificationChannelID,
 	)
 	return i, err
 }
 
 const getGuildConfig = `-- name: GetGuildConfig :one
-SELECT id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id FROM guild_config
+SELECT id, guild_id, coordinator_role_id, created_at, updated_at, competition_code_channel_id, default_timezone, event_notification_role_id, event_notification_channel_id FROM guild_config
 WHERE guild_id = ?
 LIMIT 1
 `
@@ -55,6 +56,7 @@ func (q *Queries) GetGuildConfig(ctx context.Context, guildID int64) (GuildConfi
 		&i.CompetitionCodeChannelID,
 		&i.DefaultTimezone,
 		&i.EventNotificationRoleID,
+		&i.EventNotificationChannelID,
 	)
 	return i, err
 }
@@ -104,6 +106,22 @@ type UpdateDefaultTimezoneParams struct {
 
 func (q *Queries) UpdateDefaultTimezone(ctx context.Context, arg UpdateDefaultTimezoneParams) error {
 	_, err := q.db.ExecContext(ctx, updateDefaultTimezone, arg.DefaultTimezone, arg.GuildID)
+	return err
+}
+
+const updateEventNotificationChannel = `-- name: UpdateEventNotificationChannel :exec
+UPDATE guild_config
+SET event_notification_channel_id = ?, updated_at = CURRENT_TIMESTAMP
+WHERE guild_id = ?
+`
+
+type UpdateEventNotificationChannelParams struct {
+	EventNotificationChannelID sql.NullInt64 `json:"event_notification_channel_id"`
+	GuildID                    int64         `json:"guild_id"`
+}
+
+func (q *Queries) UpdateEventNotificationChannel(ctx context.Context, arg UpdateEventNotificationChannelParams) error {
+	_, err := q.db.ExecContext(ctx, updateEventNotificationChannel, arg.EventNotificationChannelID, arg.GuildID)
 	return err
 }
 

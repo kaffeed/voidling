@@ -219,6 +219,11 @@ func (cc *ConfigCommands) HandleShowConfig(s *discordgo.Session, i *discordgo.In
 		eventNotificationRole = fmt.Sprintf("<@&%d>", config.EventNotificationRoleID.Int64)
 	}
 
+	eventNotificationChannel := "Not configured"
+	if config.EventNotificationChannelID.Valid {
+		eventNotificationChannel = fmt.Sprintf("<#%d>", config.EventNotificationChannelID.Int64)
+	}
+
 	defaultTimezone := "UTC (default)"
 	if config.DefaultTimezone.Valid {
 		defaultTimezone = config.DefaultTimezone.String
@@ -229,8 +234,9 @@ func (cc *ConfigCommands) HandleShowConfig(s *discordgo.Session, i *discordgo.In
 			"**Coordinator Role:** %s\n"+
 			"**Competition Code Channel:** %s\n"+
 			"**Event Notification Role:** %s\n"+
+			"**Event Notification Channel:** %s\n"+
 			"**Default Timezone:** %s",
-			coordinatorRole, competitionCodeChannel, eventNotificationRole, defaultTimezone),
+			coordinatorRole, competitionCodeChannel, eventNotificationRole, eventNotificationChannel, defaultTimezone),
 		Flags: discordgo.MessageFlagsEphemeral,
 	})
 }
@@ -515,6 +521,138 @@ func (cc *ConfigCommands) HandleSetMyTimezone(s *discordgo.Session, i *discordgo
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{
 			embeds.SuccessEmbed(fmt.Sprintf("Your timezone set to **%s**\n\nThis will be used as the default when creating events.", timezoneStr)),
+		},
+		Flags: discordgo.MessageFlagsEphemeral,
+	})
+}
+
+// HandleSetEventNotificationChannel handles /config set-event-notification-channel command
+func (cc *ConfigCommands) HandleSetEventNotificationChannel(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	ctx := context.Background()
+
+	// Defer the response
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		log.Printf("Error deferring response: %v", err)
+		return
+	}
+
+	// Check if user is server owner or has administrator permission
+	if !isServerOwnerOrAdmin(s, i) {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Only the server owner or administrators can configure event notification channels."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Get channel from options (subcommand -> channel option)
+	options := i.ApplicationCommandData().Options
+	if len(options) == 0 || len(options[0].Options) == 0 {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Missing channel parameter. Please try again."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	channelOption := options[0].Options[0].ChannelValue(s)
+	if channelOption == nil {
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to get channel information. Please try again."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Parse guild ID
+	guildID, err := strconv.ParseInt(i.GuildID, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing guild ID: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to parse guild ID."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Parse channel ID
+	channelID, err := strconv.ParseInt(channelOption.ID, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing channel ID: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to parse channel ID."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Check if guild config exists
+	_, err = cc.DB.GetGuildConfig(ctx, guildID)
+	if err != nil {
+		// Create guild config if it doesn't exist
+		if err == sql.ErrNoRows {
+			_, err = cc.DB.CreateGuildConfig(ctx, database.CreateGuildConfigParams{
+				GuildID:           guildID,
+				CoordinatorRoleID: sql.NullInt64{Valid: false},
+			})
+			if err != nil {
+				log.Printf("Error creating guild config: %v", err)
+				s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+					Embeds: []*discordgo.MessageEmbed{
+						embeds.ErrorEmbed("Failed to create configuration. Please try again."),
+					},
+					Flags: discordgo.MessageFlagsEphemeral,
+				})
+				return
+			}
+		} else {
+			log.Printf("Error fetching guild config: %v", err)
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Embeds: []*discordgo.MessageEmbed{
+					embeds.ErrorEmbed("Failed to fetch configuration. Please try again."),
+				},
+				Flags: discordgo.MessageFlagsEphemeral,
+			})
+			return
+		}
+	}
+
+	// Update event notification channel
+	err = cc.DB.UpdateEventNotificationChannel(ctx, database.UpdateEventNotificationChannelParams{
+		EventNotificationChannelID: sql.NullInt64{Int64: channelID, Valid: true},
+		GuildID:                    guildID,
+	})
+	if err != nil {
+		log.Printf("Error updating event notification channel: %v", err)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{
+				embeds.ErrorEmbed("Failed to save configuration. Please try again."),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
+	// Send success message
+	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Embeds: []*discordgo.MessageEmbed{
+			embeds.SuccessEmbed(fmt.Sprintf("Event notification channel set to <#%s>\n\nEvent embeds will be posted in this channel when BOTW, SOTW, and Mass events are created.", channelOption.ID)),
 		},
 		Flags: discordgo.MessageFlagsEphemeral,
 	})

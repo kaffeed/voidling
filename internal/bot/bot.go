@@ -314,6 +314,19 @@ func (b *Bot) registerCommands() error {
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "set-event-notification-channel",
+					Description: "Set the channel to post event embeds when events (BOTW, SOTW, Mass) are created",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionChannel,
+							Name:        "channel",
+							Description: "Channel for event embeds",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "set-event-notification-role",
 					Description: "Set the role to ping when events (BOTW, SOTW, Mass) are created",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -462,6 +475,8 @@ func (b *Bot) handleConfigCommand(s *discordgo.Session, i *discordgo.Interaction
 		b.configCmds.HandleSetDefaultTimezone(s, i)
 	case "set-my-timezone":
 		b.configCmds.HandleSetMyTimezone(s, i)
+	case "set-event-notification-channel":
+		b.configCmds.HandleSetEventNotificationChannel(s, i)
 	case "set-event-notification-role":
 		b.configCmds.HandleSetEventNotificationRole(s, i)
 	default:
