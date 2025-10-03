@@ -22,7 +22,7 @@ GOFMT=$(GOCMD) fmt
 LDFLAGS=-ldflags "-s -w"
 BUILD_FLAGS=-trimpath
 
-.PHONY: all build build-windows build-linux build-darwin clean test coverage run install-tools sqlc-generate migrate-up migrate-down migrate-status fmt vet lint help
+.PHONY: all build build-windows build-linux build-darwin clean test test-unit test-integration coverage test-coverage-html test-race test-bench run install-tools sqlc-generate migrate-up migrate-down migrate-status fmt vet lint help check
 
 # Default target
 all: clean fmt vet build
@@ -75,10 +75,20 @@ clean:
 	rm -rf $(BUILD_DIR)
 	@echo "Clean complete"
 
-## test: Run tests
+## test: Run all tests
 test:
 	@echo "Running tests..."
 	$(GOTEST) -v ./...
+
+## test-unit: Run unit tests only (excluding integration)
+test-unit:
+	@echo "Running unit tests..."
+	$(GOTEST) -v -short ./...
+
+## test-integration: Run integration tests only
+test-integration:
+	@echo "Running integration tests..."
+	$(GOTEST) -v -run Integration ./tests/integration/...
 
 ## test-coverage: Run tests with coverage
 coverage:
@@ -86,6 +96,31 @@ coverage:
 	$(GOTEST) -v -coverprofile=coverage.out ./...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
+
+## test-coverage-html: Generate and open coverage report in browser
+test-coverage-html: coverage
+	@echo "Opening coverage report..."
+	@if [ -f coverage.html ]; then \
+		if command -v xdg-open > /dev/null; then \
+			xdg-open coverage.html; \
+		elif command -v open > /dev/null; then \
+			open coverage.html; \
+		elif command -v start > /dev/null; then \
+			start coverage.html; \
+		else \
+			echo "coverage.html generated. Open it manually."; \
+		fi \
+	fi
+
+## test-race: Run tests with race detector
+test-race:
+	@echo "Running tests with race detector..."
+	$(GOTEST) -race -short ./...
+
+## test-bench: Run benchmark tests
+test-bench:
+	@echo "Running benchmarks..."
+	$(GOTEST) -bench=. -benchmem ./...
 
 ## run: Run the application
 run: build
