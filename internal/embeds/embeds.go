@@ -492,3 +492,19 @@ func formatActivityName(activity string) string {
 	}
 	return result
 }
+
+// WelcomeGreeting creates a greeting embed for new members
+func WelcomeGreeting(guildName string) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("👋 Welcome to %s!", guildName),
+		Description: "Welcome to the Void!\n\nTo get started, we'd like you to link your RuneScape account. This will help us track your progress in competitions and allow you to participate in clan events.\n\n**Benefits of linking your account:**\n• Participate in Boss of the Week competitions\n• Join Skill of the Week events\n• Get your stats tracked automatically\n• Compete for prizes and recognition\n\nClick the button below to link your RuneScape account and we'll update your server nickname to match your RSN!",
+		Color:       ColorInfo,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: "https://oldschool.runescape.wiki/images/OSRS_icon.png",
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "You can always link or unlink your account later using /link-rsn or /unlink-rsn",
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+}

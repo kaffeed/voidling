@@ -11,6 +11,7 @@ import (
 	"github.com/kaffeed/voidling/config"
 	"github.com/kaffeed/voidling/internal/commands"
 	"github.com/kaffeed/voidling/internal/database"
+	"github.com/kaffeed/voidling/internal/embeds"
 	"github.com/kaffeed/voidling/internal/models"
 	"github.com/kaffeed/voidling/internal/timezone"
 	"github.com/kaffeed/voidling/internal/wiseoldman"
@@ -58,12 +59,15 @@ func New(cfg *config.Config, db *database.Queries, dbSQL *sql.DB) (*Bot, error) 
 	// Register interaction handler
 	session.AddHandler(bot.interactionHandler)
 
+	// Register guild member add handler for auto-greeting
+	session.AddHandler(bot.handleGuildMemberAdd)
+
 	return bot, nil
 }
 
 // Start starts the bot
 func (b *Bot) Start() error {
-	b.Session.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages
+	b.Session.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages | discordgo.IntentsGuildMembers
 
 	err := b.Session.Open()
 	if err != nil {
@@ -519,6 +523,9 @@ func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Inte
 
 	// Route based on action
 	switch action {
+	case "dm-link-rsn":
+		// Handle DM link button - show modal (reuse existing handler)
+		b.registerCmds.HandleLinkRSN(s, i)
 	case "confirm-rsn":
 		b.registerCmds.HandleConfirmRSN(s, i, data)
 	case "cancel-rsn":
@@ -638,4 +645,50 @@ func (b *Bot) handleTimezoneAutocomplete(s *discordgo.Session, i *discordgo.Inte
 	if err != nil {
 		log.Printf("Error responding to autocomplete: %v", err)
 	}
+}
+
+// handleGuildMemberAdd sends a greeting DM to new members
+func (b *Bot) handleGuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	// Get guild information for greeting
+	guild, err := s.Guild(m.GuildID)
+	if err != nil {
+		log.Printf("Error fetching guild info for greeting: %v", err)
+		return
+	}
+
+	// Create DM channel with the new member
+	dmChannel, err := s.UserChannelCreate(m.User.ID)
+	if err != nil {
+		log.Printf("Error creating DM channel for user %s: %v", m.User.Username, err)
+		return
+	}
+
+	// Create greeting embed
+	embed := embeds.WelcomeGreeting(guild.Name)
+
+	// Create "Link My Account" button
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    "🔗 Link My RuneScape Account",
+					Style:    discordgo.PrimaryButton,
+					CustomID: fmt.Sprintf("dm-link-rsn:%s", m.GuildID), // Include guild ID for context
+				},
+			},
+		},
+	}
+
+	// Send greeting message in DM
+	_, err = s.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
+		Embeds:     []*discordgo.MessageEmbed{embed},
+		Components: components,
+	})
+	if err != nil {
+		log.Printf("Error sending greeting DM to user %s: %v", m.User.Username, err)
+		// User likely has DMs disabled, fail silently
+		return
+	}
+
+	log.Printf("Sent greeting DM to new member: %s (ID: %s) in guild: %s", m.User.Username, m.User.ID, guild.Name)
 }

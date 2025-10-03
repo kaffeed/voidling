@@ -142,8 +142,39 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	}
 
 	ctx := context.Background()
-	discordIDStr := i.Member.User.ID
-	discordID, err := strconv.ParseInt(discordIDStr, 10, 64)
+
+	// Get user ID - handle both guild and DM contexts
+	var userID string
+	var guildID string
+	if i.Member != nil {
+		// Guild context (slash command)
+		userID = i.Member.User.ID
+		guildID = i.GuildID
+	} else if i.User != nil {
+		// DM context (button from greeting)
+		userID = i.User.ID
+		// Extract guild ID from original button custom ID if available
+		// For now, we'll get it from the message components
+		if i.Message != nil && len(i.Message.Components) > 0 {
+			// Try to extract from the original button
+			for _, component := range i.Message.Components {
+				if actionRow, ok := component.(*discordgo.ActionsRow); ok {
+					for _, comp := range actionRow.Components {
+						if button, ok := comp.(*discordgo.Button); ok {
+							// Parse "dm-link-rsn:GUILD_ID" from original button
+							parts := strings.SplitN(button.CustomID, ":", 2)
+							if len(parts) == 2 && parts[0] == "dm-link-rsn" {
+								guildID = parts[1]
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	discordID, err := strconv.ParseInt(userID, 10, 64)
 	if err != nil {
 		log.Printf("Error parsing Discord ID: %v", err)
 		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
@@ -153,7 +184,7 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	log.Printf("Confirming RSN link for Discord user %s (%d) with RSN: %s", i.Member.User.Username, discordID, username)
+	log.Printf("Confirming RSN link for Discord user %s (%d) with RSN: %s", userID, discordID, username)
 
 	// Start a transaction
 	tx, err := r.DBSQL.Begin()
@@ -244,11 +275,32 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 		Components: &[]discordgo.MessageComponent{},
 	})
 
-	// Send success message
-	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-		Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s**!", username))},
-		Flags:  discordgo.MessageFlagsEphemeral,
-	})
+	// If we have a guild ID, try to update the member's nickname
+	if guildID != "" {
+		err = s.GuildMemberNickname(guildID, userID, username)
+		if err != nil {
+			log.Printf("Failed to update nickname for user %s in guild %s: %v", userID, guildID, err)
+			// Don't fail the whole operation, just log the error
+			// Send success message with note about nickname
+			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+				Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s**!\n\n*Note: I couldn't update your server nickname automatically. Please ask a server admin to update it.*", username))},
+				Flags:  discordgo.MessageFlagsEphemeral,
+			})
+			return
+		}
+		log.Printf("Updated nickname for user %s to %s in guild %s", userID, username, guildID)
+		// Send success message with nickname update confirmation
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s** and updated your server nickname!", username))},
+			Flags:  discordgo.MessageFlagsEphemeral,
+		})
+	} else {
+		// Send standard success message (no guild context)
+		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+			Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s**!", username))},
+			Flags:  discordgo.MessageFlagsEphemeral,
+		})
+	}
 }
 
 // HandleCancelRSN handles the cancel button for linking
