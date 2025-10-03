@@ -1,3 +1,5 @@
+// Package commands provides Discord slash command handlers for the Voidling bot.
+// This file contains registration-related commands for linking/unlinking RuneScape accounts.
 package commands
 
 import (
@@ -61,27 +63,13 @@ func (r *RegisterCommands) HandleLinkRSN(s *discordgo.Session, i *discordgo.Inte
 
 // HandleLinkRSNModal processes the modal submission for linking
 func (r *RegisterCommands) HandleLinkRSNModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// Defer the response to give us time to fetch player data
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
-	if err != nil {
-		log.Printf("Error deferring link-rsn modal response: %v", err)
+	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
 	}
 
-	// Get the username from the modal
-	data := i.ModalSubmitData()
-	username := strings.TrimSpace(data.Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value)
-
+	username := r.extractUsernameFromModal(i)
 	if username == "" {
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Content: "Username cannot be empty.",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		})
+		r.sendErrorFollowup(s, i, "Username cannot be empty.")
 		return
 	}
 
@@ -129,58 +117,17 @@ func (r *RegisterCommands) HandleLinkRSNModal(s *discordgo.Session, i *discordgo
 
 // HandleConfirmRSN handles the confirmation button for linking
 func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.InteractionCreate, username string) {
-	// Defer the response
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
-	if err != nil {
-		log.Printf("Error deferring confirm-rsn response: %v", err)
+	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
 	}
 
 	ctx := context.Background()
+	userID, guildID := r.getUserAndGuildIDs(i)
 
-	// Get user ID - handle both guild and DM contexts
-	var userID string
-	var guildID string
-	if i.Member != nil {
-		// Guild context (slash command)
-		userID = i.Member.User.ID
-		guildID = i.GuildID
-	} else if i.User != nil {
-		// DM context (button from greeting)
-		userID = i.User.ID
-		// Extract guild ID from original button custom ID if available
-		// For now, we'll get it from the message components
-		if i.Message != nil && len(i.Message.Components) > 0 {
-			// Try to extract from the original button
-			for _, component := range i.Message.Components {
-				if actionRow, ok := component.(*discordgo.ActionsRow); ok {
-					for _, comp := range actionRow.Components {
-						if button, ok := comp.(*discordgo.Button); ok {
-							// Parse "dm-link-rsn:GUILD_ID" from original button
-							parts := strings.SplitN(button.CustomID, ":", 2)
-							if len(parts) == 2 && parts[0] == "dm-link-rsn" {
-								guildID = parts[1]
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	discordID, err := strconv.ParseInt(userID, 10, 64)
+	discordID, err := r.parseDiscordID(userID)
 	if err != nil {
 		log.Printf("Error parsing Discord ID: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Invalid Discord ID.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Invalid Discord ID."))
 		return
 	}
 
@@ -190,10 +137,7 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	tx, err := r.DBSQL.Begin()
 	if err != nil {
 		log.Printf("Error starting transaction: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Database error. Please try again later.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Database error. Please try again later."))
 		return
 	}
 	defer tx.Rollback()
@@ -218,42 +162,29 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	}
 
 	// Deactivate all existing links for this user
-	err = qtx.DeactivateAllAccountLinksForUser(ctx, discordID)
-	if err != nil {
+	if err = qtx.DeactivateAllAccountLinksForUser(ctx, discordID); err != nil {
 		log.Printf("Error deactivating existing links: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Failed to update account links. Please try again.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Failed to update account links. Please try again."))
 		return
 	}
 
-	// If the link exists but was inactive, reactivate it
+	// If the link exists but was inactive, reactivate it; otherwise create new
 	if linkExists {
 		log.Printf("Reactivating existing account link: %d", existingLink.ID)
-		err = qtx.ActivateAccountLink(ctx, existingLink.ID)
-		if err != nil {
+		if err = qtx.ActivateAccountLink(ctx, existingLink.ID); err != nil {
 			log.Printf("Error reactivating account link: %v", err)
-			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Failed to activate account link. Please try again.")},
-				Flags:  discordgo.MessageFlagsEphemeral,
-			})
+			r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Failed to activate account link. Please try again."))
 			return
 		}
 	} else {
-		// Create new link
 		log.Printf("Creating new account link for user %d with RSN %s", discordID, username)
-		_, err = qtx.CreateAccountLink(ctx, database.CreateAccountLinkParams{
+		if _, err = qtx.CreateAccountLink(ctx, database.CreateAccountLinkParams{
 			DiscordMemberID: discordID,
 			RunescapeName:   username,
 			IsActive:        true,
-		})
-		if err != nil {
+		}); err != nil {
 			log.Printf("Error creating account link: %v", err)
-			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Failed to link account. Please try again.")},
-				Flags:  discordgo.MessageFlagsEphemeral,
-			})
+			r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Failed to link account. Please try again."))
 			return
 		}
 	}
@@ -261,46 +192,38 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		log.Printf("Error committing transaction: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Failed to save changes. Please try again.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Failed to save changes. Please try again."))
 		return
 	}
 
 	log.Printf("Successfully linked RSN %s to Discord user %d", username, discordID)
 
-	// Update the original message to remove buttons and show success
+	// Update the original message to remove buttons
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Components: &[]discordgo.MessageComponent{},
 	})
 
-	// If we have a guild ID, try to update the member's nickname
-	if guildID != "" {
-		err = s.GuildMemberNickname(guildID, userID, username)
-		if err != nil {
-			log.Printf("Failed to update nickname for user %s in guild %s: %v", userID, guildID, err)
-			// Don't fail the whole operation, just log the error
-			// Send success message with note about nickname
-			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s**!\n\n*Note: I couldn't update your server nickname automatically. Please ask a server admin to update it.*", username))},
-				Flags:  discordgo.MessageFlagsEphemeral,
-			})
-			return
-		}
-		log.Printf("Updated nickname for user %s to %s in guild %s", userID, username, guildID)
-		// Send success message with nickname update confirmation
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s** and updated your server nickname!", username))},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
-	} else {
-		// Send standard success message (no guild context)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully linked your account to **%s**!", username))},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+	// Send appropriate success message based on nickname update result
+	successMsg := r.buildSuccessMessage(s, guildID, userID, username)
+	r.sendEmbedFollowup(s, i, embeds.SuccessEmbed(successMsg))
+}
+
+// buildSuccessMessage creates a success message and attempts nickname update
+func (r *RegisterCommands) buildSuccessMessage(s *discordgo.Session, guildID, userID, username string) string {
+	baseMsg := fmt.Sprintf("Successfully linked your account to **%s**!", username)
+
+	if guildID == "" {
+		return baseMsg
 	}
+
+	// Attempt to update nickname
+	if err := r.updateMemberNickname(s, guildID, userID, username); err != nil {
+		log.Printf("Failed to update nickname for user %s in guild %s: %v", userID, guildID, err)
+		return baseMsg + "\n\n*Note: I couldn't update your server nickname automatically. Please ask a server admin to update it.*"
+	}
+
+	log.Printf("Updated nickname for user %s to %s in guild %s", userID, username, guildID)
+	return baseMsg + " Your server nickname has been updated too!"
 }
 
 // HandleCancelRSN handles the cancel button for linking
@@ -320,27 +243,15 @@ func (r *RegisterCommands) HandleCancelRSN(s *discordgo.Session, i *discordgo.In
 
 // HandleUnlinkRSN handles unlinking a RuneScape account
 func (r *RegisterCommands) HandleUnlinkRSN(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// Defer response
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
-	if err != nil {
-		log.Printf("Error deferring unlink-rsn response: %v", err)
+	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
 	}
 
 	ctx := context.Background()
-	discordIDStr := i.Member.User.ID
-	discordID, err := strconv.ParseInt(discordIDStr, 10, 64)
+	discordID, err := r.parseDiscordID(i.Member.User.ID)
 	if err != nil {
 		log.Printf("Error parsing Discord ID: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Content: "Invalid Discord ID.",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		})
+		r.sendErrorFollowup(s, i, "Invalid Discord ID.")
 		return
 	}
 
@@ -350,36 +261,127 @@ func (r *RegisterCommands) HandleUnlinkRSN(s *discordgo.Session, i *discordgo.In
 	activeLink, err := r.DB.GetAccountLinkByDiscordID(ctx, discordID)
 	if err == sql.ErrNoRows {
 		log.Printf("No active account found for user %d", discordID)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Content: "You don't have any linked account. Use `/link-rsn` to link your RuneScape account.",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		})
+		r.sendErrorFollowup(s, i, "You don't have any linked account. Use `/link-rsn` to link your RuneScape account.")
 		return
 	}
 	if err != nil {
 		log.Printf("Error fetching account link: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Database error. Please try again later.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Database error. Please try again later."))
 		return
 	}
 
 	// Deactivate the link
-	err = r.DB.DeactivateAccountLink(ctx, activeLink.ID)
-	if err != nil {
+	if err = r.DB.DeactivateAccountLink(ctx, activeLink.ID); err != nil {
 		log.Printf("Error deactivating account link: %v", err)
-		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{embeds.ErrorEmbed("Failed to unlink account. Please try again.")},
-			Flags:  discordgo.MessageFlagsEphemeral,
-		})
+		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Failed to unlink account. Please try again."))
 		return
 	}
 
 	log.Printf("Successfully unlinked RSN %s from Discord user %d", activeLink.RunescapeName, discordID)
+	r.sendEmbedFollowup(s, i, embeds.SuccessEmbed(fmt.Sprintf("Successfully unlinked your account from **%s**.", activeLink.RunescapeName)))
+}
 
+// Helper methods for cleaner code
+
+// deferEphemeralResponse defers an ephemeral response for the interaction
+func (r *RegisterCommands) deferEphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		log.Printf("Error deferring response: %v", err)
+	}
+	return err
+}
+
+// extractUsernameFromModal extracts and trims the username from modal submission
+func (r *RegisterCommands) extractUsernameFromModal(i *discordgo.InteractionCreate) string {
+	data := i.ModalSubmitData()
+	actionRow, ok := data.Components[0].(*discordgo.ActionsRow)
+	if !ok {
+		return ""
+	}
+	textInput, ok := actionRow.Components[0].(*discordgo.TextInput)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(textInput.Value)
+}
+
+// sendErrorFollowup sends an error message as a followup
+func (r *RegisterCommands) sendErrorFollowup(s *discordgo.Session, i *discordgo.InteractionCreate, message string) {
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-		Embeds: []*discordgo.MessageEmbed{embeds.SuccessEmbed(fmt.Sprintf("Successfully unlinked your account from **%s**.", activeLink.RunescapeName))},
+		Content: message,
+		Flags:   discordgo.MessageFlagsEphemeral,
+	})
+}
+
+// sendEmbedFollowup sends an embed as a followup message
+func (r *RegisterCommands) sendEmbedFollowup(s *discordgo.Session, i *discordgo.InteractionCreate, embed *discordgo.MessageEmbed) {
+	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Embeds: []*discordgo.MessageEmbed{embed},
 		Flags:  discordgo.MessageFlagsEphemeral,
 	})
+}
+
+// getUserAndGuildIDs extracts user ID and guild ID from interaction context
+func (r *RegisterCommands) getUserAndGuildIDs(i *discordgo.InteractionCreate) (userID, guildID string) {
+	if i.Member != nil {
+		// Guild context (slash command)
+		return i.Member.User.ID, i.GuildID
+	}
+
+	if i.User != nil {
+		// DM context (button from greeting)
+		userID = i.User.ID
+		guildID = r.extractGuildIDFromMessage(i.Message)
+		return userID, guildID
+	}
+
+	return "", ""
+}
+
+// extractGuildIDFromMessage extracts guild ID from message components
+func (r *RegisterCommands) extractGuildIDFromMessage(msg *discordgo.Message) string {
+	if msg == nil || len(msg.Components) == 0 {
+		return ""
+	}
+
+	for _, component := range msg.Components {
+		actionRow, ok := component.(*discordgo.ActionsRow)
+		if !ok {
+			continue
+		}
+
+		for _, comp := range actionRow.Components {
+			button, ok := comp.(*discordgo.Button)
+			if !ok {
+				continue
+			}
+
+			// Parse "dm-link-rsn:GUILD_ID" from button custom ID
+			parts := strings.SplitN(button.CustomID, ":", 2)
+			if len(parts) == 2 && parts[0] == "dm-link-rsn" {
+				return parts[1]
+			}
+		}
+	}
+
+	return ""
+}
+
+// parseDiscordID safely parses a Discord ID string to int64
+func (r *RegisterCommands) parseDiscordID(idStr string) (int64, error) {
+	return strconv.ParseInt(idStr, 10, 64)
+}
+
+// updateMemberNickname attempts to update a guild member's nickname
+func (r *RegisterCommands) updateMemberNickname(s *discordgo.Session, guildID, userID, nickname string) error {
+	if guildID == "" {
+		return fmt.Errorf("no guild context")
+	}
+	return s.GuildMemberNickname(guildID, userID, nickname)
 }

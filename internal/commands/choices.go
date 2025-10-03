@@ -29,13 +29,13 @@ const (
 type GroupBoss string
 
 const (
-	GroupCorporealBeast    GroupBoss = "corporeal_beast"
-	GroupNex               GroupBoss = "nex"
-	GroupNightmare         GroupBoss = "nightmare"
-	GroupCommanderZilyana  GroupBoss = "commander_zilyana"
-	GroupKrilTsutsaroth    GroupBoss = "kril_tsutsaroth"
-	GroupGeneralGraardor   GroupBoss = "general_graardor"
-	GroupKreeArra          GroupBoss = "kreearra"
+	GroupCorporealBeast   GroupBoss = "corporeal_beast"
+	GroupNex              GroupBoss = "nex"
+	GroupNightmare        GroupBoss = "nightmare"
+	GroupCommanderZilyana GroupBoss = "commander_zilyana"
+	GroupKrilTsutsaroth   GroupBoss = "kril_tsutsaroth"
+	GroupGeneralGraardor  GroupBoss = "general_graardor"
+	GroupKreeArra         GroupBoss = "kreearra"
 )
 
 // QuestBoss represents quest/solo bosses
@@ -69,15 +69,15 @@ const (
 type WorldBoss string
 
 const (
-	WorldBarrows              WorldBoss = "barrows_chests"
-	WorldGiantMole            WorldBoss = "giant_mole"
+	WorldBarrows               WorldBoss = "barrows_chests"
+	WorldGiantMole             WorldBoss = "giant_mole"
 	WorldDerangedArchaeologist WorldBoss = "deranged_archaeologist"
-	WorldDagannothPrime       WorldBoss = "dagannoth_prime"
-	WorldDagannothRex         WorldBoss = "dagannoth_rex"
-	WorldDagannothSupreme     WorldBoss = "dagannoth_supreme"
-	WorldSarachnis            WorldBoss = "sarachnis"
-	WorldKalphiteQueen        WorldBoss = "kalphite_queen"
-	WorldSkotizo              WorldBoss = "skotizo"
+	WorldDagannothPrime        WorldBoss = "dagannoth_prime"
+	WorldDagannothRex          WorldBoss = "dagannoth_rex"
+	WorldDagannothSupreme      WorldBoss = "dagannoth_supreme"
+	WorldSarachnis             WorldBoss = "sarachnis"
+	WorldKalphiteQueen         WorldBoss = "kalphite_queen"
+	WorldSkotizo               WorldBoss = "skotizo"
 )
 
 // MassBoss represents bosses commonly done in mass events
@@ -109,8 +109,8 @@ const (
 	MassVenenatis          MassBoss = "venenatis"
 	MassVetion             MassBoss = "vetion"
 	// Skilling bosses
-	MassTempoross         MassBoss = "tempoross"
-	MassWintertodt        MassBoss = "wintertodt"
+	MassTempoross          MassBoss = "tempoross"
+	MassWintertodt         MassBoss = "wintertodt"
 	MassGuardiansOfTheRift MassBoss = "guardians_of_the_rift"
 )
 

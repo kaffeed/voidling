@@ -1,3 +1,5 @@
+// Package embeds provides Discord embed builders for the Voidling bot.
+// All embeds follow consistent styling with color-coding by event type.
 package embeds
 
 import (
@@ -77,25 +79,12 @@ func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 		},
 	}
 
-	// Add some notable skill levels (combat stats)
-	notableSkills := []string{
-		"attack",
-		"strength",
-		"defence",
-		"hitpoints",
-		"ranged",
-		"magic",
-	}
-
+	// Add combat stats
+	combatStats := []string{"attack", "strength", "defence", "hitpoints", "ranged", "magic"}
 	skillValues := ""
-	for _, skillName := range notableSkills {
+	for _, skillName := range combatStats {
 		if skill := player.GetSkill(skillName); skill != nil {
-			// Capitalize first letter
-			displayName := skillName
-			if len(displayName) > 0 {
-				displayName = string(displayName[0]-32) + displayName[1:]
-			}
-			skillValues += fmt.Sprintf("**%s**: %d\n", displayName, skill.Level)
+			skillValues += fmt.Sprintf("**%s**: %d\n", capitalizeFirst(skillName), skill.Level)
 		}
 	}
 
@@ -383,34 +372,34 @@ func getBossImageURL(activity string) string {
 	// Map of activity names (snake_case) to OSRS Wiki image URLs
 	bossImages := map[string]string{
 		// PvM Bosses
-		"corporeal_beast":      "https://oldschool.runescape.wiki/images/thumb/Corporeal_Beast.png/270px-Corporeal_Beast.png",
-		"nex":                  "https://oldschool.runescape.wiki/images/thumb/Nex.png/270px-Nex.png",
-		"nightmare":            "https://oldschool.runescape.wiki/images/thumb/The_Nightmare.png/250px-The_Nightmare.png",
-		"phosanis_nightmare":   "https://oldschool.runescape.wiki/images/thumb/Phosani%27s_Nightmare.png/250px-Phosani%27s_Nightmare.png",
-		"commander_zilyana":    "https://oldschool.runescape.wiki/images/thumb/Commander_Zilyana.png/250px-Commander_Zilyana.png",
-		"kril_tsutsaroth":      "https://oldschool.runescape.wiki/images/thumb/K%27ril_Tsutsaroth.png/250px-K%27ril_Tsutsaroth.png",
-		"general_graardor":     "https://oldschool.runescape.wiki/images/thumb/General_Graardor.png/250px-General_Graardor.png",
-		"kreearra":             "https://oldschool.runescape.wiki/images/thumb/Kree%27arra.png/250px-Kree%27arra.png",
-		"godwars":              "https://oldschool.runescape.wiki/images/thumb/God_Wars_Dungeon.png/300px-God_Wars_Dungeon.png",
+		"corporeal_beast":    "https://oldschool.runescape.wiki/images/thumb/Corporeal_Beast.png/270px-Corporeal_Beast.png",
+		"nex":                "https://oldschool.runescape.wiki/images/thumb/Nex.png/270px-Nex.png",
+		"nightmare":          "https://oldschool.runescape.wiki/images/thumb/The_Nightmare.png/250px-The_Nightmare.png",
+		"phosanis_nightmare": "https://oldschool.runescape.wiki/images/thumb/Phosani%27s_Nightmare.png/250px-Phosani%27s_Nightmare.png",
+		"commander_zilyana":  "https://oldschool.runescape.wiki/images/thumb/Commander_Zilyana.png/250px-Commander_Zilyana.png",
+		"kril_tsutsaroth":    "https://oldschool.runescape.wiki/images/thumb/K%27ril_Tsutsaroth.png/250px-K%27ril_Tsutsaroth.png",
+		"general_graardor":   "https://oldschool.runescape.wiki/images/thumb/General_Graardor.png/250px-General_Graardor.png",
+		"kreearra":           "https://oldschool.runescape.wiki/images/thumb/Kree%27arra.png/250px-Kree%27arra.png",
+		"godwars":            "https://oldschool.runescape.wiki/images/thumb/God_Wars_Dungeon.png/300px-God_Wars_Dungeon.png",
 		// Raids
-		"theatre_of_blood":     "https://oldschool.runescape.wiki/images/thumb/Theatre_of_Blood_logo.png/250px-Theatre_of_Blood_logo.png",
-		"chambers_of_xeric":    "https://oldschool.runescape.wiki/images/thumb/Chambers_of_Xeric_logo.png/250px-Chambers_of_Xeric_logo.png",
-		"tombs_of_amascut":     "https://oldschool.runescape.wiki/images/thumb/Tombs_of_Amascut.png/300px-Tombs_of_Amascut.png",
+		"theatre_of_blood":  "https://oldschool.runescape.wiki/images/thumb/Theatre_of_Blood_logo.png/250px-Theatre_of_Blood_logo.png",
+		"chambers_of_xeric": "https://oldschool.runescape.wiki/images/thumb/Chambers_of_Xeric_logo.png/250px-Chambers_of_Xeric_logo.png",
+		"tombs_of_amascut":  "https://oldschool.runescape.wiki/images/thumb/Tombs_of_Amascut.png/300px-Tombs_of_Amascut.png",
 		// Wilderness Bosses
-		"king_black_dragon":    "https://oldschool.runescape.wiki/images/thumb/King_Black_Dragon.png/280px-King_Black_Dragon.png",
-		"scorpia":              "https://oldschool.runescape.wiki/images/thumb/Scorpia.png/300px-Scorpia.png",
-		"artio":                "https://oldschool.runescape.wiki/images/thumb/Artio.png/250px-Artio.png",
-		"callisto":             "https://oldschool.runescape.wiki/images/thumb/Callisto.png/300px-Callisto.png",
-		"calvarion":            "https://oldschool.runescape.wiki/images/thumb/Calvarion.png/300px-Calvarion.png",
-		"chaos_elemental":      "https://oldschool.runescape.wiki/images/thumb/Chaos_Elemental.png/280px-Chaos_Elemental.png",
-		"chaos_fanatic":        "https://oldschool.runescape.wiki/images/thumb/Chaos_Fanatic.png/200px-Chaos_Fanatic.png",
-		"crazy_archaeologist":  "https://oldschool.runescape.wiki/images/thumb/Crazy_Archaeologist.png/200px-Crazy_Archaeologist.png",
-		"spindel":              "https://oldschool.runescape.wiki/images/thumb/Spindel.png/300px-Spindel.png",
-		"venenatis":            "https://oldschool.runescape.wiki/images/thumb/Venenatis.png/300px-Venenatis.png",
-		"vetion":               "https://oldschool.runescape.wiki/images/thumb/Vet%27ion.png/250px-Vet%27ion.png",
+		"king_black_dragon":   "https://oldschool.runescape.wiki/images/thumb/King_Black_Dragon.png/280px-King_Black_Dragon.png",
+		"scorpia":             "https://oldschool.runescape.wiki/images/thumb/Scorpia.png/300px-Scorpia.png",
+		"artio":               "https://oldschool.runescape.wiki/images/thumb/Artio.png/250px-Artio.png",
+		"callisto":            "https://oldschool.runescape.wiki/images/thumb/Callisto.png/300px-Callisto.png",
+		"calvarion":           "https://oldschool.runescape.wiki/images/thumb/Calvarion.png/300px-Calvarion.png",
+		"chaos_elemental":     "https://oldschool.runescape.wiki/images/thumb/Chaos_Elemental.png/280px-Chaos_Elemental.png",
+		"chaos_fanatic":       "https://oldschool.runescape.wiki/images/thumb/Chaos_Fanatic.png/200px-Chaos_Fanatic.png",
+		"crazy_archaeologist": "https://oldschool.runescape.wiki/images/thumb/Crazy_Archaeologist.png/200px-Crazy_Archaeologist.png",
+		"spindel":             "https://oldschool.runescape.wiki/images/thumb/Spindel.png/300px-Spindel.png",
+		"venenatis":           "https://oldschool.runescape.wiki/images/thumb/Venenatis.png/300px-Venenatis.png",
+		"vetion":              "https://oldschool.runescape.wiki/images/thumb/Vet%27ion.png/250px-Vet%27ion.png",
 		// Skilling Bosses
-		"tempoross":            "https://oldschool.runescape.wiki/images/thumb/Tempoross.png/280px-Tempoross.png",
-		"wintertodt":           "https://oldschool.runescape.wiki/images/thumb/Wintertodt.png/300px-Wintertodt.png",
+		"tempoross":             "https://oldschool.runescape.wiki/images/thumb/Tempoross.png/280px-Tempoross.png",
+		"wintertodt":            "https://oldschool.runescape.wiki/images/thumb/Wintertodt.png/300px-Wintertodt.png",
 		"guardians_of_the_rift": "https://oldschool.runescape.wiki/images/thumb/The_Great_Guardian.png/250px-The_Great_Guardian.png",
 	}
 
@@ -480,17 +469,29 @@ func formatActivityName(activity string) string {
 			result += " "
 			capitalize = true
 		} else if capitalize {
-			if c >= 'a' && c <= 'z' {
-				result += string(c - 32) // Convert to uppercase
-			} else {
-				result += string(c)
-			}
+			result += string(toUpper(c))
 			capitalize = false
 		} else {
 			result += string(c)
 		}
 	}
 	return result
+}
+
+// capitalizeFirst capitalizes the first letter of a string
+func capitalizeFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return string(toUpper(rune(s[0]))) + s[1:]
+}
+
+// toUpper converts a lowercase letter to uppercase
+func toUpper(c rune) rune {
+	if c >= 'a' && c <= 'z' {
+		return c - 32
+	}
+	return c
 }
 
 // WelcomeGreeting creates a greeting embed for new members

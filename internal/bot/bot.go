@@ -1,3 +1,5 @@
+// Package bot provides the core Discord bot implementation for Voidling.
+// It handles command registration, interaction routing, and event processing.
 package bot
 
 import (

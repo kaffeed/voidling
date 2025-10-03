@@ -10,11 +10,11 @@ import (
 
 // Config holds application configuration
 type Config struct {
-	DiscordToken       string
-	DatabasePath       string
-	LogLevel           string
-	GuildID            string // Optional: specific guild for slash command registration
-	CoordinatorRoleID  string // Optional: specific role ID for Coordinator permissions
+	DiscordToken      string
+	DatabasePath      string
+	LogLevel          string
+	GuildID           string // Optional: specific guild for slash command registration
+	CoordinatorRoleID string // Optional: specific role ID for Coordinator permissions
 }
 
 // Load loads configuration from .env file and environment variables

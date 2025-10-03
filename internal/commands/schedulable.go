@@ -68,10 +68,10 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 
 	// Get options
 	options := i.ApplicationCommandData().Options
-	activity := options[0].StringValue()       // e.g., "Corporeal Beast", "Nex"
-	location := options[1].StringValue()       // e.g., "World 444"
-	timeStr := options[2].StringValue()        // e.g., "2025-01-15 20:00"
-	durationMinutes := options[3].IntValue()   // e.g., 60, 120
+	activity := options[0].StringValue()     // e.g., "Corporeal Beast", "Nex"
+	location := options[1].StringValue()     // e.g., "World 444"
+	timeStr := options[2].StringValue()      // e.g., "2025-01-15 20:00"
+	durationMinutes := options[3].IntValue() // e.g., 60, 120
 	var timezoneParam string
 	if len(options) > 4 {
 		timezoneParam = options[4].StringValue() // Optional timezone

@@ -35,19 +35,19 @@ type Archive struct {
 
 // Snapshot represents a player snapshot
 type Snapshot struct {
-	ID         int64          `json:"id"`
-	PlayerID   int64          `json:"playerId"`
-	CreatedAt  time.Time      `json:"createdAt"`
-	ImportedAt *time.Time     `json:"importedAt"`
-	Data       SnapshotData   `json:"data"`
+	ID         int64        `json:"id"`
+	PlayerID   int64        `json:"playerId"`
+	CreatedAt  time.Time    `json:"createdAt"`
+	ImportedAt *time.Time   `json:"importedAt"`
+	Data       SnapshotData `json:"data"`
 }
 
 // SnapshotData contains all player metrics
 type SnapshotData struct {
-	Skills     map[string]SkillData     `json:"skills"`
-	Bosses     map[string]BossData      `json:"bosses"`
-	Activities map[string]ActivityData  `json:"activities"`
-	Computed   map[string]ComputedData  `json:"computed"`
+	Skills     map[string]SkillData    `json:"skills"`
+	Bosses     map[string]BossData     `json:"bosses"`
+	Activities map[string]ActivityData `json:"activities"`
+	Computed   map[string]ComputedData `json:"computed"`
 }
 
 // SkillData represents skill metrics
@@ -107,28 +107,28 @@ func (p *Player) GetBoss(bossName string) *BossData {
 
 // Competition represents a WOM competition
 type Competition struct {
-	ID               int64                  `json:"id"`
-	Title            string                 `json:"title"`
-	Metric           string                 `json:"metric"`
-	Type             string                 `json:"type"`
-	StartsAt         time.Time              `json:"startsAt"`
-	EndsAt           time.Time              `json:"endsAt"`
-	GroupID          *int64                 `json:"groupId"`
-	Score            int                    `json:"score"`
-	CreatedAt        time.Time              `json:"createdAt"`
-	UpdatedAt        time.Time              `json:"updatedAt"`
-	ParticipantCount int                    `json:"participantCount"`
+	ID               int64                      `json:"id"`
+	Title            string                     `json:"title"`
+	Metric           string                     `json:"metric"`
+	Type             string                     `json:"type"`
+	StartsAt         time.Time                  `json:"startsAt"`
+	EndsAt           time.Time                  `json:"endsAt"`
+	GroupID          *int64                     `json:"groupId"`
+	Score            int                        `json:"score"`
+	CreatedAt        time.Time                  `json:"createdAt"`
+	UpdatedAt        time.Time                  `json:"updatedAt"`
+	ParticipantCount int                        `json:"participantCount"`
 	Participations   []CompetitionParticipation `json:"participations"`
 }
 
 // CompetitionParticipation represents a player's participation in a competition
 type CompetitionParticipation struct {
-	PlayerID      int64     `json:"playerId"`
-	CompetitionID int64     `json:"competitionId"`
-	TeamName      *string   `json:"teamName"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	Player        Player    `json:"player"`
+	PlayerID      int64                  `json:"playerId"`
+	CompetitionID int64                  `json:"competitionId"`
+	TeamName      *string                `json:"teamName"`
+	CreatedAt     time.Time              `json:"createdAt"`
+	UpdatedAt     time.Time              `json:"updatedAt"`
+	Player        Player                 `json:"player"`
 	Progress      *ParticipationProgress `json:"progress,omitempty"`
 }
 
