@@ -19,7 +19,9 @@ import (
 	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
-// Bot represents the Discord bot
+type handlerFunc func(s *discordgo.Session, i *discordgo.InteractionCreate)
+
+// Bot represents the
 type Bot struct {
 	Session         *discordgo.Session
 	Config          *config.Config
@@ -28,7 +30,7 @@ type Bot struct {
 	WOMClient       *wiseoldman.Client
 	GuildID         string
 	commands        []*discordgo.ApplicationCommand
-	handlers        map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	handlers        map[string]handlerFunc
 	registerCmds    *commands.RegisterCommands
 	trackableCmds   *commands.TrackableCommands
 	schedulableCmds *commands.SchedulableCommands
@@ -51,7 +53,7 @@ func New(cfg *config.Config, db *database.Queries, dbSQL *sql.DB) (*Bot, error) 
 		DBSQL:           dbSQL,
 		WOMClient:       womClient,
 		GuildID:         cfg.GuildID,
-		handlers:        make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)),
+		handlers:        make(map[string]handlerFunc),
 		registerCmds:    commands.NewRegisterCommands(db, dbSQL, womClient),
 		trackableCmds:   commands.NewTrackableCommands(db, dbSQL, womClient),
 		schedulableCmds: commands.NewSchedulableCommands(db, dbSQL),
