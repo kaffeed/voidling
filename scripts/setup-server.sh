@@ -81,19 +81,31 @@ else
     echo "You'll need to manually copy it to /etc/systemd/system/"
 fi
 
-# Configure sudo permissions for service management (optional but recommended)
-if [ ! -f "/etc/sudoers.d/$APP_USER" ]; then
-    cat > "/etc/sudoers.d/$APP_USER" << EOF
+# Configure sudo permissions for service management (required for CD)
+SUDOERS_FILE="/etc/sudoers.d/$APP_USER"
+if [ -f "$SUDOERS_FILE" ]; then
+    echo "Removing existing sudoers file..."
+    rm -f "$SUDOERS_FILE"
+fi
+
+cat > "$SUDOERS_FILE" << EOF
 # Allow $APP_USER to manage voidling service without password
+# Required for GitHub Actions CD pipeline
 $APP_USER ALL=(ALL) NOPASSWD: /bin/systemctl start $SERVICE_NAME
 $APP_USER ALL=(ALL) NOPASSWD: /bin/systemctl stop $SERVICE_NAME
 $APP_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart $SERVICE_NAME
 $APP_USER ALL=(ALL) NOPASSWD: /bin/systemctl status $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /bin/systemctl is-active $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl start $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl status $SERVICE_NAME
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active $SERVICE_NAME
 $APP_USER ALL=(ALL) NOPASSWD: /bin/journalctl -u $SERVICE_NAME*
+$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/journalctl -u $SERVICE_NAME*
 EOF
-    chmod 440 "/etc/sudoers.d/$APP_USER"
-    echo "Sudo permissions configured for service management"
-fi
+chmod 440 "$SUDOERS_FILE"
+echo "Sudo permissions configured for service management"
 
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"

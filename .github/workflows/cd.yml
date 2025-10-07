@@ -85,11 +85,11 @@ jobs:
 
             # Stop service if running
             echo "Stopping service..."
-            if systemctl is-active --quiet voidling; then
+            if sudo systemctl is-active --quiet voidling 2>/dev/null; then
               sudo systemctl stop voidling
               echo "Service stopped"
             else
-              echo "Service not running"
+              echo "Service not running or not yet installed"
             fi
 
             # Backup current binary if it exists
@@ -139,7 +139,7 @@ jobs:
 
             # Check service status
             echo "Checking service status..."
-            if systemctl is-active --quiet voidling; then
+            if sudo systemctl is-active --quiet voidling; then
               echo "Service started successfully!"
               sudo systemctl status voidling --no-pager
             else
