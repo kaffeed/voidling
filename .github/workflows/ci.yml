@@ -1,0 +1,179 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Format check
+        run: |
+          make fmt
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Code is not formatted. Run 'make fmt' locally."
+            git diff
+            exit 1
+          fi
+
+      - name: Vet
+        run: make vet
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Run golangci-lint
+        run: golangci-lint run --timeout=5m
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: make test
+
+      - name: Run tests with race detector
+        run: make test-race
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            artifact: voidling-linux-amd64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            artifact: voidling-windows-amd64.exe
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            artifact: voidling-darwin-amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            artifact: voidling-darwin-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build (Linux with CGO)
+        if: matrix.goos == 'linux'
+        env:
+          CGO_ENABLED: 1
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p build
+          go build -trimpath -ldflags "-s -w" -o build/${{ matrix.artifact }} ./cmd/voidling
+
+      - name: Build (Other platforms)
+        if: matrix.goos != 'linux'
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p build
+          go build -trimpath -ldflags "-s -w" -o build/${{ matrix.artifact }} ./cmd/voidling
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/${{ matrix.artifact }}
+          retention-days: 7
+
+  sqlc:
+    name: SQLC Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+      - name: Generate sqlc code
+        run: sqlc generate
+
+      - name: Check for uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain internal/database)" ]; then
+            echo "Generated sqlc code differs from committed code."
+            echo "Run 'make sqlc-generate' locally and commit the changes."
+            git diff internal/database
+            exit 1
+          fi
+
+  migrations:
+    name: Migration Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Install goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Test migrations
+        run: |
+          mkdir -p /tmp/voidling
+          goose -dir migrations sqlite3 /tmp/voidling/test.db up
+          goose -dir migrations sqlite3 /tmp/voidling/test.db status

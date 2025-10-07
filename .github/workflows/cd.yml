@@ -1,0 +1,181 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build Linux binary (CGO enabled for SQLite)
+        env:
+          CGO_ENABLED: 1
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          mkdir -p build
+          go build -trimpath -ldflags "-s -w" -o build/voidling ./cmd/voidling
+          chmod +x build/voidling
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voidling-binary
+          path: build/voidling
+          retention-days: 1
+
+  deploy:
+    name: Deploy to Ubuntu Server
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: https://discord.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: voidling-binary
+          path: build
+
+      - name: Set executable permissions
+        run: chmod +x build/voidling
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            echo "Starting deployment..."
+
+            # Define paths
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            BINARY_NAME="voidling"
+            BACKUP_NAME="${BINARY_NAME}.backup"
+
+            # Create deployment directory if it doesn't exist
+            mkdir -p "$DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+
+            # Stop service if running
+            echo "Stopping service..."
+            if systemctl is-active --quiet voidling; then
+              sudo systemctl stop voidling
+              echo "Service stopped"
+            else
+              echo "Service not running"
+            fi
+
+            # Backup current binary if it exists
+            if [ -f "$BINARY_NAME" ]; then
+              echo "Backing up current binary..."
+              mv "$BINARY_NAME" "$BACKUP_NAME"
+            fi
+
+            echo "Deployment preparation complete"
+
+      - name: Copy binary to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "build/voidling"
+          target: "${{ secrets.DEPLOY_PATH }}"
+          strip_components: 1
+
+      - name: Start service and verify
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            # Define paths
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            BINARY_NAME="voidling"
+
+            cd "$DEPLOY_PATH"
+
+            # Ensure binary is executable
+            chmod +x "$BINARY_NAME"
+
+            # Start service
+            echo "Starting service..."
+            sudo systemctl start voidling
+
+            # Wait for service to stabilize
+            sleep 5
+
+            # Check service status
+            echo "Checking service status..."
+            if systemctl is-active --quiet voidling; then
+              echo "Service started successfully!"
+              sudo systemctl status voidling --no-pager
+            else
+              echo "Service failed to start!"
+              sudo systemctl status voidling --no-pager
+              # Rollback
+              if [ -f "$BINARY_NAME.backup" ]; then
+                echo "Rolling back to previous version..."
+                mv "$BINARY_NAME.backup" "$BINARY_NAME"
+                sudo systemctl start voidling
+              fi
+              exit 1
+            fi
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: voidling-binary
+          path: build
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/voidling
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

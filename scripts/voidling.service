@@ -1,0 +1,46 @@
+[Unit]
+Description=Voidling Discord Bot for RuneScape Clan Management
+Documentation=https://github.com/kaffeed/voidling
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=voidling
+Group=voidling
+WorkingDirectory=/opt/voidling
+ExecStart=/opt/voidling/voidling
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=5min
+StartLimitBurst=3
+
+# Output handling
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=voidling
+
+# Environment file (contains DISCORD_TOKEN, DATABASE_PATH, etc.)
+EnvironmentFile=/opt/voidling/.env
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/voidling/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+
+# Resource limits (optional, adjust as needed)
+# MemoryMax=512M
+# CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,9 @@
 # voidling
 
+[![CI](https://github.com/kaffeed/voidling/actions/workflows/ci.yml/badge.svg)](https://github.com/kaffeed/voidling/actions/workflows/ci.yml)
+[![CD](https://github.com/kaffeed/voidling/actions/workflows/cd.yml/badge.svg)](https://github.com/kaffeed/voidling/actions/workflows/cd.yml)
+[![Go Version](https://img.shields.io/badge/Go-1.24.1-00ADD8?logo=go)](https://go.dev/)
+
 A Discord bot for managing RuneScape (OSRS) clan events, built in Go. Complete rewrite of [TopezEventBot](https://github.com/kaffeed/TopezEventBot) with improved performance, better maintainability, and modern patterns.
 
 ## Features
@@ -255,6 +259,66 @@ Complete rewrite of [TopezEventBot](https://github.com/kaffeed/TopezEventBot) (C
 **Data Migration:**
 Database schema is similar but not directly compatible. Manual migration required.
 
+## Deployment
+
+### Production Deployment to Ubuntu Server
+
+The project includes automated CI/CD pipelines using GitHub Actions.
+
+**CI Pipeline** (automatic on push/PR):
+- Format checking
+- Static analysis (go vet)
+- Linting (golangci-lint)
+- Test execution with race detector
+- Multi-platform builds (Linux, Windows, macOS)
+- SQLC generation validation
+- Database migration testing
+
+**CD Pipeline** (automatic on version tags):
+- Builds production Linux binary with SQLite support
+- Deploys to Ubuntu server via SSH
+- Manages systemd service (stop/start/verify)
+- Creates GitHub releases with binaries
+- Automatic rollback on deployment failure
+
+### Server Setup
+
+See [`implement/SECRETS.md`](implement/SECRETS.md) for detailed setup instructions.
+
+**Quick setup:**
+
+```bash
+# On Ubuntu server
+sudo bash scripts/setup-server.sh
+
+# Edit .env with your bot token
+sudo nano /opt/voidling/.env
+
+# Add SSH public key for GitHub Actions
+echo "ssh-ed25519 AAAAC3..." | sudo tee -a /opt/voidling/.ssh/authorized_keys
+```
+
+**Configure GitHub Secrets:**
+- `SSH_HOST` - Server IP/hostname
+- `SSH_USERNAME` - SSH user (typically `voidling`)
+- `SSH_KEY` - SSH private key
+- `SSH_PORT` - SSH port (default: 22)
+- `DEPLOY_PATH` - Deployment path (default: `/opt/voidling`)
+
+**Deploy:**
+```bash
+# Tag and push to trigger deployment
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Service Management:**
+```bash
+sudo systemctl status voidling   # Check status
+sudo systemctl restart voidling  # Restart
+sudo journalctl -u voidling -f   # View logs
+```
+
 ## Contributing
 
 Issues and pull requests welcome! This is an active project.
@@ -262,8 +326,7 @@ Issues and pull requests welcome! This is an active project.
 **Development priorities:**
 1. Scheduled notifications implementation
 2. Progress tracking background job
-3. Test coverage
-4. CI/CD setup
+3. Test coverage expansion
 
 ## License
 
