@@ -138,7 +138,7 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	log.Printf("Confirming RSN link for Discord user %s (%d) with RSN: %s", userID, discordID, username)
 
 	// Start a transaction
-	tx, err := r.DBSQL.BeginTx(context.Background(), nil)
+	tx, err := r.DBSQL.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Error starting transaction: %v", err)
 		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Database error. Please try again later."))
