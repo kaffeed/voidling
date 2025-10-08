@@ -5,6 +5,7 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -16,14 +17,17 @@ import (
 	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
-// RegisterCommands holds the handlers for account registration commands
+// ErrNoGuildContext is returned when a guild context is required but not available.
+var ErrNoGuildContext = errors.New("no guild context")
+
+// RegisterCommands holds the handlers for account registration commands.
 type RegisterCommands struct {
 	DB        *database.Queries
 	DBSQL     *sql.DB
 	WOMClient *wiseoldman.Client
 }
 
-// NewRegisterCommands creates a new RegisterCommands instance
+// NewRegisterCommands creates a new RegisterCommands instance.
 func NewRegisterCommands(db *database.Queries, dbSQL *sql.DB, womClient *wiseoldman.Client) *RegisterCommands {
 	return &RegisterCommands{
 		DB:        db,
@@ -32,7 +36,7 @@ func NewRegisterCommands(db *database.Queries, dbSQL *sql.DB, womClient *wiseold
 	}
 }
 
-// HandleLinkRSN shows the modal for linking a RuneScape account
+// HandleLinkRSN shows the modal for linking a RuneScape account.
 func (r *RegisterCommands) HandleLinkRSN(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
@@ -61,7 +65,7 @@ func (r *RegisterCommands) HandleLinkRSN(s *discordgo.Session, i *discordgo.Inte
 	}
 }
 
-// HandleLinkRSNModal processes the modal submission for linking
+// HandleLinkRSNModal processes the modal submission for linking.
 func (r *RegisterCommands) HandleLinkRSNModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
@@ -115,7 +119,7 @@ func (r *RegisterCommands) HandleLinkRSNModal(s *discordgo.Session, i *discordgo
 	})
 }
 
-// HandleConfirmRSN handles the confirmation button for linking
+// HandleConfirmRSN handles the confirmation button for linking.
 func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.InteractionCreate, username string) {
 	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
@@ -140,7 +144,7 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 		r.sendEmbedFollowup(s, i, embeds.ErrorEmbed("Database error. Please try again later."))
 		return
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }() // Rollback is safe to call even after commit
 
 	qtx := r.DB.WithTx(tx)
 
@@ -153,7 +157,7 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 
 	if linkExists && existingLink.IsActive {
 		log.Printf("Account link already exists and is active for user %d", discordID)
-		tx.Rollback()
+		_ = tx.Rollback()
 		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 			Content: "This account is already linked and active!",
 			Flags:   discordgo.MessageFlagsEphemeral,
@@ -199,16 +203,16 @@ func (r *RegisterCommands) HandleConfirmRSN(s *discordgo.Session, i *discordgo.I
 	log.Printf("Successfully linked RSN %s to Discord user %d", username, discordID)
 
 	// Update the original message to remove buttons
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	_, _ = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Components: &[]discordgo.MessageComponent{},
-	})
+	}) // Ignore error - success message sent below
 
 	// Send appropriate success message based on nickname update result
 	successMsg := r.buildSuccessMessage(s, guildID, userID, username)
 	r.sendEmbedFollowup(s, i, embeds.SuccessEmbed(successMsg))
 }
 
-// buildSuccessMessage creates a success message and attempts nickname update
+// buildSuccessMessage creates a success message and attempts nickname update.
 func (r *RegisterCommands) buildSuccessMessage(s *discordgo.Session, guildID, userID, username string) string {
 	baseMsg := fmt.Sprintf("Successfully linked your account to **%s**!", username)
 
@@ -226,7 +230,7 @@ func (r *RegisterCommands) buildSuccessMessage(s *discordgo.Session, guildID, us
 	return baseMsg + " Your server nickname has been updated too!"
 }
 
-// HandleCancelRSN handles the cancel button for linking
+// HandleCancelRSN handles the cancel button for linking.
 func (r *RegisterCommands) HandleCancelRSN(s *discordgo.Session, i *discordgo.InteractionCreate, username string) {
 	log.Printf("User %s cancelled linking RSN: %s", i.Member.User.Username, username)
 
@@ -241,7 +245,7 @@ func (r *RegisterCommands) HandleCancelRSN(s *discordgo.Session, i *discordgo.In
 	})
 }
 
-// HandleUnlinkRSN handles unlinking a RuneScape account
+// HandleUnlinkRSN handles unlinking a RuneScape account.
 func (r *RegisterCommands) HandleUnlinkRSN(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := r.deferEphemeralResponse(s, i); err != nil {
 		return
@@ -259,7 +263,7 @@ func (r *RegisterCommands) HandleUnlinkRSN(s *discordgo.Session, i *discordgo.In
 
 	// Get active account link
 	activeLink, err := r.DB.GetAccountLinkByDiscordID(ctx, discordID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("No active account found for user %d", discordID)
 		r.sendErrorFollowup(s, i, "You don't have any linked account. Use `/link-rsn` to link your RuneScape account.")
 		return
@@ -283,7 +287,7 @@ func (r *RegisterCommands) HandleUnlinkRSN(s *discordgo.Session, i *discordgo.In
 
 // Helper methods for cleaner code
 
-// deferEphemeralResponse defers an ephemeral response for the interaction
+// deferEphemeralResponse defers an ephemeral response for the interaction.
 func (r *RegisterCommands) deferEphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -297,7 +301,7 @@ func (r *RegisterCommands) deferEphemeralResponse(s *discordgo.Session, i *disco
 	return err
 }
 
-// extractUsernameFromModal extracts and trims the username from modal submission
+// extractUsernameFromModal extracts and trims the username from modal submission.
 func (r *RegisterCommands) extractUsernameFromModal(i *discordgo.InteractionCreate) string {
 	data := i.ModalSubmitData()
 	actionRow, ok := data.Components[0].(*discordgo.ActionsRow)
@@ -311,7 +315,7 @@ func (r *RegisterCommands) extractUsernameFromModal(i *discordgo.InteractionCrea
 	return strings.TrimSpace(textInput.Value)
 }
 
-// sendErrorFollowup sends an error message as a followup
+// sendErrorFollowup sends an error message as a followup.
 func (r *RegisterCommands) sendErrorFollowup(s *discordgo.Session, i *discordgo.InteractionCreate, message string) {
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content: message,
@@ -319,7 +323,7 @@ func (r *RegisterCommands) sendErrorFollowup(s *discordgo.Session, i *discordgo.
 	})
 }
 
-// sendEmbedFollowup sends an embed as a followup message
+// sendEmbedFollowup sends an embed as a followup message.
 func (r *RegisterCommands) sendEmbedFollowup(s *discordgo.Session, i *discordgo.InteractionCreate, embed *discordgo.MessageEmbed) {
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{embed},
@@ -327,7 +331,7 @@ func (r *RegisterCommands) sendEmbedFollowup(s *discordgo.Session, i *discordgo.
 	})
 }
 
-// getUserAndGuildIDs extracts user ID and guild ID from interaction context
+// getUserAndGuildIDs extracts user ID and guild ID from interaction context.
 func (r *RegisterCommands) getUserAndGuildIDs(i *discordgo.InteractionCreate) (userID, guildID string) {
 	if i.Member != nil {
 		// Guild context (slash command)
@@ -344,7 +348,7 @@ func (r *RegisterCommands) getUserAndGuildIDs(i *discordgo.InteractionCreate) (u
 	return "", ""
 }
 
-// extractGuildIDFromMessage extracts guild ID from message components
+// extractGuildIDFromMessage extracts guild ID from message components.
 func (r *RegisterCommands) extractGuildIDFromMessage(msg *discordgo.Message) string {
 	if msg == nil || len(msg.Components) == 0 {
 		return ""
@@ -373,15 +377,15 @@ func (r *RegisterCommands) extractGuildIDFromMessage(msg *discordgo.Message) str
 	return ""
 }
 
-// parseDiscordID safely parses a Discord ID string to int64
+// parseDiscordID safely parses a Discord ID string to int64.
 func (r *RegisterCommands) parseDiscordID(idStr string) (int64, error) {
 	return strconv.ParseInt(idStr, 10, 64)
 }
 
-// updateMemberNickname attempts to update a guild member's nickname
+// updateMemberNickname attempts to update a guild member's nickname.
 func (r *RegisterCommands) updateMemberNickname(s *discordgo.Session, guildID, userID, nickname string) error {
 	if guildID == "" {
-		return fmt.Errorf("no guild context")
+		return ErrNoGuildContext
 	}
 	return s.GuildMemberNickname(guildID, userID, nickname)
 }

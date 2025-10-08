@@ -1,6 +1,6 @@
 package models
 
-// EventType represents the type of a trackable or schedulable event
+// EventType represents the type of a trackable or schedulable event.
 type EventType string
 
 const (
@@ -10,6 +10,5 @@ const (
 	EventTypeWildyWednesday EventType = "WILDY_WEDNESDAY"
 )
 
-// HiscoreField represents a skill or boss in OSRS
-// This is used for event descriptions and tracking
+// This is used for event descriptions and tracking.
 type HiscoreField string

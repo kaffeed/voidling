@@ -5,18 +5,18 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockDiscordSession is a mock implementation of discordgo.Session for testing
+// MockDiscordSession is a mock implementation of discordgo.Session for testing.
 type MockDiscordSession struct {
 	mock.Mock
 }
 
-// InteractionRespond mocks the Discord interaction response
+// InteractionRespond mocks the Discord interaction response.
 func (m *MockDiscordSession) InteractionRespond(i *discordgo.Interaction, resp *discordgo.InteractionResponse) error {
 	args := m.Called(i, resp)
 	return args.Error(0)
 }
 
-// FollowupMessageCreate mocks creating a followup message
+// FollowupMessageCreate mocks creating a followup message.
 func (m *MockDiscordSession) FollowupMessageCreate(i *discordgo.Interaction, wait bool, data *discordgo.WebhookParams) (*discordgo.Message, error) {
 	args := m.Called(i, wait, data)
 	if args.Get(0) == nil {
@@ -25,7 +25,7 @@ func (m *MockDiscordSession) FollowupMessageCreate(i *discordgo.Interaction, wai
 	return args.Get(0).(*discordgo.Message), args.Error(1)
 }
 
-// InteractionResponseEdit mocks editing an interaction response
+// InteractionResponseEdit mocks editing an interaction response.
 func (m *MockDiscordSession) InteractionResponseEdit(i *discordgo.Interaction, edit *discordgo.WebhookEdit) (*discordgo.Message, error) {
 	args := m.Called(i, edit)
 	if args.Get(0) == nil {
@@ -34,13 +34,13 @@ func (m *MockDiscordSession) InteractionResponseEdit(i *discordgo.Interaction, e
 	return args.Get(0).(*discordgo.Message), args.Error(1)
 }
 
-// GuildMemberNickname mocks updating a guild member's nickname
+// GuildMemberNickname mocks updating a guild member's nickname.
 func (m *MockDiscordSession) GuildMemberNickname(guildID, userID, nickname string) error {
 	args := m.Called(guildID, userID, nickname)
 	return args.Error(0)
 }
 
-// ThreadStartComplex mocks creating a Discord thread
+// ThreadStartComplex mocks creating a Discord thread.
 func (m *MockDiscordSession) ThreadStartComplex(channelID string, params *discordgo.ThreadStart) (*discordgo.Channel, error) {
 	args := m.Called(channelID, params)
 	if args.Get(0) == nil {
@@ -49,7 +49,7 @@ func (m *MockDiscordSession) ThreadStartComplex(channelID string, params *discor
 	return args.Get(0).(*discordgo.Channel), args.Error(1)
 }
 
-// ChannelMessageSendComplex mocks sending a complex message
+// ChannelMessageSendComplex mocks sending a complex message.
 func (m *MockDiscordSession) ChannelMessageSendComplex(channelID string, data *discordgo.MessageSend) (*discordgo.Message, error) {
 	args := m.Called(channelID, data)
 	if args.Get(0) == nil {
@@ -58,7 +58,7 @@ func (m *MockDiscordSession) ChannelMessageSendComplex(channelID string, data *d
 	return args.Get(0).(*discordgo.Message), args.Error(1)
 }
 
-// UserChannelCreate mocks creating a DM channel
+// UserChannelCreate mocks creating a DM channel.
 func (m *MockDiscordSession) UserChannelCreate(userID string) (*discordgo.Channel, error) {
 	args := m.Called(userID)
 	if args.Get(0) == nil {
@@ -67,7 +67,7 @@ func (m *MockDiscordSession) UserChannelCreate(userID string) (*discordgo.Channe
 	return args.Get(0).(*discordgo.Channel), args.Error(1)
 }
 
-// Guild mocks fetching guild information
+// Guild mocks fetching guild information.
 func (m *MockDiscordSession) Guild(guildID string) (*discordgo.Guild, error) {
 	args := m.Called(guildID)
 	if args.Get(0) == nil {
@@ -76,7 +76,7 @@ func (m *MockDiscordSession) Guild(guildID string) (*discordgo.Guild, error) {
 	return args.Get(0).(*discordgo.Guild), args.Error(1)
 }
 
-// CreateTestInteraction creates a test Discord interaction for command testing
+// CreateTestInteraction creates a test Discord interaction for command testing.
 func CreateTestInteraction(commandName string, userID string, guildID string) *discordgo.InteractionCreate {
 	return &discordgo.InteractionCreate{
 		Interaction: &discordgo.Interaction{
@@ -97,7 +97,7 @@ func CreateTestInteraction(commandName string, userID string, guildID string) *d
 	}
 }
 
-// CreateTestModalSubmit creates a test modal submission interaction
+// CreateTestModalSubmit creates a test modal submission interaction.
 func CreateTestModalSubmit(customID string, userID string, componentValues map[string]string) *discordgo.InteractionCreate {
 	components := make([]discordgo.MessageComponent, 0)
 
@@ -129,7 +129,7 @@ func CreateTestModalSubmit(customID string, userID string, componentValues map[s
 	}
 }
 
-// CreateTestButtonInteraction creates a test button interaction
+// CreateTestButtonInteraction creates a test button interaction.
 func CreateTestButtonInteraction(customID string, userID string, guildID string) *discordgo.InteractionCreate {
 	return &discordgo.InteractionCreate{
 		Interaction: &discordgo.Interaction{

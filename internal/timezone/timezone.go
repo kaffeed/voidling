@@ -1,12 +1,16 @@
 package timezone
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 )
 
-// CommonTimezones returns a list of commonly used IANA timezone names
+// ErrEmptyTimezone is returned when an empty timezone string is provided.
+var ErrEmptyTimezone = errors.New("timezone cannot be empty")
+
+// CommonTimezones returns a list of commonly used IANA timezone names.
 func CommonTimezones() []string {
 	return []string{
 		// UTC
@@ -56,10 +60,10 @@ func CommonTimezones() []string {
 	}
 }
 
-// ValidateTimezone checks if a timezone string is valid
+// ValidateTimezone checks if a timezone string is valid.
 func ValidateTimezone(tz string) error {
 	if tz == "" {
-		return fmt.Errorf("timezone cannot be empty")
+		return ErrEmptyTimezone
 	}
 
 	_, err := time.LoadLocation(tz)
@@ -70,9 +74,7 @@ func ValidateTimezone(tz string) error {
 	return nil
 }
 
-// ParseInTimezone parses a time string in a specific timezone
-// timeStr format: "2006-01-02 15:04"
-// Returns the time in UTC
+// Returns the time in UTC.
 func ParseInTimezone(timeStr, tz string) (time.Time, error) {
 	// Validate timezone
 	if err := ValidateTimezone(tz); err != nil {
@@ -94,7 +96,7 @@ func ParseInTimezone(timeStr, tz string) (time.Time, error) {
 	return t, nil
 }
 
-// ConvertToTimezone converts a UTC time to a specific timezone
+// ConvertToTimezone converts a UTC time to a specific timezone.
 func ConvertToTimezone(t time.Time, tz string) (time.Time, error) {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -104,20 +106,17 @@ func ConvertToTimezone(t time.Time, tz string) (time.Time, error) {
 	return t.In(loc), nil
 }
 
-// FormatForDiscord returns a Discord timestamp string
-// Format: <t:UNIX:F> for full date/time
+// Format: <t:UNIX:F> for full date/time.
 func FormatForDiscord(t time.Time) string {
 	return fmt.Sprintf("<t:%d:F>", t.Unix())
 }
 
-// FormatForDiscordRelative returns a Discord relative timestamp string
-// Format: <t:UNIX:R> for "in X hours/days"
+// Format: <t:UNIX:R> for "in X hours/days".
 func FormatForDiscordRelative(t time.Time) string {
 	return fmt.Sprintf("<t:%d:R>", t.Unix())
 }
 
-// GetTimezoneAbbreviation returns a friendly abbreviation for display
-// e.g., "America/New_York" -> "EST" or "EDT" depending on date
+// e.g., "America/New_York" -> "EST" or "EDT" depending on date.
 func GetTimezoneAbbreviation(t time.Time, tz string) string {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -127,8 +126,7 @@ func GetTimezoneAbbreviation(t time.Time, tz string) string {
 	return t.In(loc).Format("MST")
 }
 
-// FormatTimeWithTimezone returns a formatted string with timezone info
-// e.g., "January 15, 2025 8:00 PM EST"
+// e.g., "January 15, 2025 8:00 PM EST".
 func FormatTimeWithTimezone(t time.Time, tz string) string {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -142,8 +140,7 @@ func FormatTimeWithTimezone(t time.Time, tz string) string {
 	return fmt.Sprintf("%s %s", formatted, abbrev)
 }
 
-// SearchTimezones returns timezones that match the search query
-// Used for autocomplete functionality
+// Used for autocomplete functionality.
 func SearchTimezones(query string) []string {
 	query = strings.ToLower(query)
 	results := []string{}

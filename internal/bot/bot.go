@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -21,7 +22,7 @@ import (
 
 type handlerFunc func(s *discordgo.Session, i *discordgo.InteractionCreate)
 
-// Bot represents the
+// Bot represents the.
 type Bot struct {
 	Session         *discordgo.Session
 	Config          *config.Config
@@ -37,7 +38,7 @@ type Bot struct {
 	configCmds      *commands.ConfigCommands
 }
 
-// New creates a new Bot instance
+// New creates a new Bot instance.
 func New(cfg *config.Config, db *database.Queries, dbSQL *sql.DB) (*Bot, error) {
 	session, err := discordgo.New("Bot " + cfg.DiscordToken)
 	if err != nil {
@@ -69,7 +70,7 @@ func New(cfg *config.Config, db *database.Queries, dbSQL *sql.DB) (*Bot, error) 
 	return bot, nil
 }
 
-// Start starts the bot
+// Start starts the bot.
 func (b *Bot) Start() error {
 	b.Session.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages | discordgo.IntentsGuildMembers
 
@@ -88,7 +89,7 @@ func (b *Bot) Start() error {
 	return nil
 }
 
-// Stop stops the bot
+// Stop stops the bot.
 func (b *Bot) Stop() error {
 	// Unregister commands
 	if err := b.unregisterCommands(); err != nil {
@@ -98,7 +99,7 @@ func (b *Bot) Stop() error {
 	return b.Session.Close()
 }
 
-// registerCommands registers all slash commands
+// registerCommands registers all slash commands.
 func (b *Bot) registerCommands() error {
 	// Define commands
 	b.commands = []*discordgo.ApplicationCommand{
@@ -370,7 +371,7 @@ func (b *Bot) registerCommands() error {
 	return nil
 }
 
-// unregisterCommands removes all registered commands
+// unregisterCommands removes all registered commands.
 func (b *Bot) unregisterCommands() error {
 	commands, err := b.Session.ApplicationCommands(b.Session.State.User.ID, b.GuildID)
 	if err != nil {
@@ -388,12 +389,12 @@ func (b *Bot) unregisterCommands() error {
 	return nil
 }
 
-// registerHandler registers a command handler
+// registerHandler registers a command handler.
 func (b *Bot) registerHandler(name string, handler func(s *discordgo.Session, i *discordgo.InteractionCreate)) {
 	b.handlers[name] = handler
 }
 
-// handleBOTWCommand routes BOTW subcommands
+// handleBOTWCommand routes BOTW subcommands.
 func (b *Bot) handleBOTWCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	if len(data.Options) == 0 {
@@ -432,7 +433,7 @@ func (b *Bot) handleBOTWCommand(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 }
 
-// handleSOTWCommand routes SOTW subcommands
+// handleSOTWCommand routes SOTW subcommands.
 func (b *Bot) handleSOTWCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	if len(data.Options) == 0 {
@@ -463,7 +464,7 @@ func (b *Bot) handleSOTWCommand(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 }
 
-// handleConfigCommand routes config subcommands
+// handleConfigCommand routes config subcommands.
 func (b *Bot) handleConfigCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	if len(data.Options) == 0 {
@@ -492,7 +493,7 @@ func (b *Bot) handleConfigCommand(s *discordgo.Session, i *discordgo.Interaction
 	}
 }
 
-// interactionHandler handles all interactions
+// interactionHandler handles all interactions.
 func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
@@ -508,7 +509,7 @@ func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionC
 	}
 }
 
-// handleComponentInteraction handles button/select menu interactions
+// handleComponentInteraction handles button/select menu interactions.
 func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	customID := i.MessageComponentData().CustomID
 
@@ -551,7 +552,7 @@ func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Inte
 	}
 }
 
-// handleRegisterForEvent handles registration button clicks
+// handleRegisterForEvent handles registration button clicks.
 func (b *Bot) handleRegisterForEvent(s *discordgo.Session, i *discordgo.InteractionCreate, data string, eventTypeStr string) {
 	// data format: "womCompetitionID,threadID"
 	parts := strings.Split(data, ",")
@@ -575,10 +576,16 @@ func (b *Bot) handleRegisterForEvent(s *discordgo.Session, i *discordgo.Interact
 		eventType = string(models.EventTypeSkillOfTheWeek)
 	}
 
-	b.trackableCmds.RegisterForEvent(s, i, womCompetitionID, threadID, models.EventType(eventType))
+	if err := b.trackableCmds.RegisterForEvent(s, i, womCompetitionID, threadID, models.EventType(eventType)); err != nil {
+		slog.Error("failed to register user for trackable event",
+			"error", err,
+			"competition_id", womCompetitionID,
+			"event_type", eventType,
+		)
+	}
 }
 
-// handleListParticipants handles list participants button clicks
+// handleListParticipants handles list participants button clicks.
 func (b *Bot) handleListParticipants(s *discordgo.Session, i *discordgo.InteractionCreate, data string) {
 	womCompetitionID, err := strconv.ParseInt(data, 10, 64)
 	if err != nil {
@@ -586,10 +593,15 @@ func (b *Bot) handleListParticipants(s *discordgo.Session, i *discordgo.Interact
 		return
 	}
 
-	b.trackableCmds.ListParticipants(s, i, womCompetitionID)
+	if err := b.trackableCmds.ListParticipants(s, i, womCompetitionID); err != nil {
+		slog.Error("failed to list participants for trackable event",
+			"error", err,
+			"competition_id", womCompetitionID,
+		)
+	}
 }
 
-// handleModalSubmit handles modal submissions
+// handleModalSubmit handles modal submissions.
 func (b *Bot) handleModalSubmit(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	customID := i.ModalSubmitData().CustomID
 
@@ -602,7 +614,7 @@ func (b *Bot) handleModalSubmit(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 }
 
-// handleTimezoneAutocomplete handles timezone autocomplete
+// handleTimezoneAutocomplete handles timezone autocomplete.
 func (b *Bot) handleTimezoneAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	var focusedOption *discordgo.ApplicationCommandInteractionDataOption
@@ -651,7 +663,7 @@ func (b *Bot) handleTimezoneAutocomplete(s *discordgo.Session, i *discordgo.Inte
 	}
 }
 
-// handleGuildMemberAdd sends a greeting DM to new members
+// handleGuildMemberAdd sends a greeting DM to new members.
 func (b *Bot) handleGuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	// Get guild information for greeting
 	guild, err := s.Guild(m.GuildID)

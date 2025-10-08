@@ -8,19 +8,19 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// PermissionLevel represents the required permission level for a command
+// PermissionLevel represents the required permission level for a command.
 type PermissionLevel int
 
 const (
-	// PermissionEveryone - anyone can use
+	// PermissionEveryone - anyone can use.
 	PermissionEveryone PermissionLevel = iota
-	// PermissionCoordinator - requires Coordinator role
+	// PermissionCoordinator - requires Coordinator role.
 	PermissionCoordinator
-	// PermissionAdmin - requires administrator permission
+	// PermissionAdmin - requires administrator permission.
 	PermissionAdmin
 )
 
-// HasPermission checks if a user has the required permission level
+// HasPermission checks if a user has the required permission level.
 func (b *Bot) HasPermission(s *discordgo.Session, i *discordgo.InteractionCreate, level PermissionLevel) bool {
 	// Everyone level always passes
 	if level == PermissionEveryone {
@@ -89,7 +89,7 @@ func (b *Bot) HasPermission(s *discordgo.Session, i *discordgo.InteractionCreate
 	return false
 }
 
-// hasRole checks if a member has a specific role
+// hasRole checks if a member has a specific role.
 func hasRole(member *discordgo.Member, roleID string) bool {
 	for _, r := range member.Roles {
 		if r == roleID {
@@ -99,7 +99,7 @@ func hasRole(member *discordgo.Member, roleID string) bool {
 	return false
 }
 
-// RequirePermission wraps a handler with permission checking
+// RequirePermission wraps a handler with permission checking.
 func (b *Bot) RequirePermission(level PermissionLevel, handler func(s *discordgo.Session, i *discordgo.InteractionCreate)) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if !b.HasPermission(s, i, level) {

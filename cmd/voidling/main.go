@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
+	_ "time/tzdata" // Embed timezone database for Windows
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
-	_ "time/tzdata" // Embed timezone database for Windows
 
 	"github.com/kaffeed/voidling/config"
 	"github.com/kaffeed/voidling/internal/bot"
@@ -45,7 +47,7 @@ func run() error {
 
 	// Ensure database directory exists
 	dbDir := filepath.Dir(cfg.DatabasePath)
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
+	if err := os.MkdirAll(dbDir, 0750); err != nil {
 		return fmt.Errorf("failed to create database directory: %w", err)
 	}
 
@@ -54,7 +56,11 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.Error("failed to close database", "error", err)
+		}
+	}()
 
 	// Run migrations
 	log.Println("Running database migrations...")

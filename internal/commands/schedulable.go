@@ -14,13 +14,13 @@ import (
 	"github.com/kaffeed/voidling/internal/timezone"
 )
 
-// SchedulableCommands handles Mass and Wildy Wednesday event commands
+// SchedulableCommands handles Mass and Wildy Wednesday event commands.
 type SchedulableCommands struct {
 	DB    *database.Queries
 	DBSQL *sql.DB
 }
 
-// NewSchedulableCommands creates a new SchedulableCommands instance
+// NewSchedulableCommands creates a new SchedulableCommands instance.
 func NewSchedulableCommands(db *database.Queries, dbSQL *sql.DB) *SchedulableCommands {
 	return &SchedulableCommands{
 		DB:    db,
@@ -28,7 +28,7 @@ func NewSchedulableCommands(db *database.Queries, dbSQL *sql.DB) *SchedulableCom
 	}
 }
 
-// getEffectiveTimezone returns the timezone to use: param > user pref > guild default > UTC
+// getEffectiveTimezone returns the timezone to use: param > user pref > guild default > UTC.
 func (sc *SchedulableCommands) getEffectiveTimezone(ctx context.Context, guildID, userID int64, paramTZ string) string {
 	// 1. If timezone parameter provided, use it
 	if paramTZ != "" {
@@ -53,7 +53,7 @@ func (sc *SchedulableCommands) getEffectiveTimezone(ctx context.Context, guildID
 	return "UTC"
 }
 
-// HandleMassEvent handles /mass command
+// HandleMassEvent handles /mass command.
 func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	ctx := context.Background()
 
@@ -209,7 +209,7 @@ func (sc *SchedulableCommands) HandleMassEvent(s *discordgo.Session, i *discordg
 	}
 }
 
-// HandleParticipateInMass handles mass event participation button clicks
+// HandleParticipateInMass handles mass event participation button clicks.
 func (sc *SchedulableCommands) HandleParticipateInMass(s *discordgo.Session, i *discordgo.InteractionCreate, discordEventID string) {
 	ctx := context.Background()
 
@@ -302,7 +302,7 @@ func (sc *SchedulableCommands) HandleParticipateInMass(s *discordgo.Session, i *
 	})
 }
 
-// HandleListParticipantsMass handles listing mass event participants
+// HandleListParticipantsMass handles listing mass event participants.
 func (sc *SchedulableCommands) HandleListParticipantsMass(s *discordgo.Session, i *discordgo.InteractionCreate, discordEventID string) {
 	ctx := context.Background()
 

@@ -5,7 +5,7 @@ import (
 	"github.com/kaffeed/voidling/internal/models"
 )
 
-// HandleBOTWWildy handles /botw wildy command
+// HandleBOTWWildy handles /botw wildy command.
 func (t *TrackableCommands) HandleBOTWWildy(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the boss parameter
@@ -17,7 +17,7 @@ func (t *TrackableCommands) HandleBOTWWildy(s *discordgo.Session, i *discordgo.I
 	}
 }
 
-// HandleBOTWGroup handles /botw group command
+// HandleBOTWGroup handles /botw group command.
 func (t *TrackableCommands) HandleBOTWGroup(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the boss parameter
@@ -29,7 +29,7 @@ func (t *TrackableCommands) HandleBOTWGroup(s *discordgo.Session, i *discordgo.I
 	}
 }
 
-// HandleBOTWQuest handles /botw quest command
+// HandleBOTWQuest handles /botw quest command.
 func (t *TrackableCommands) HandleBOTWQuest(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the boss parameter
@@ -41,7 +41,7 @@ func (t *TrackableCommands) HandleBOTWQuest(s *discordgo.Session, i *discordgo.I
 	}
 }
 
-// HandleBOTWSlayer handles /botw slayer command
+// HandleBOTWSlayer handles /botw slayer command.
 func (t *TrackableCommands) HandleBOTWSlayer(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the boss parameter
@@ -53,7 +53,7 @@ func (t *TrackableCommands) HandleBOTWSlayer(s *discordgo.Session, i *discordgo.
 	}
 }
 
-// HandleBOTWWorld handles /botw world command
+// HandleBOTWWorld handles /botw world command.
 func (t *TrackableCommands) HandleBOTWWorld(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the boss parameter
@@ -65,7 +65,7 @@ func (t *TrackableCommands) HandleBOTWWorld(s *discordgo.Session, i *discordgo.I
 	}
 }
 
-// HandleBOTWFinish handles /botw finish command
+// HandleBOTWFinish handles /botw finish command.
 func (t *TrackableCommands) HandleBOTWFinish(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := t.FinishEvent(s, i, models.EventTypeBossOfTheWeek)
 	if err != nil {

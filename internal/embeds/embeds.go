@@ -11,7 +11,7 @@ import (
 	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
-// Color constants for embeds
+// Color constants for embeds.
 const (
 	ColorSuccess = 0x2ecc71 // Green
 	ColorError   = 0xe74c3c // Red
@@ -23,7 +23,7 @@ const (
 	ColorWildy   = 0xc0392b // Dark Red
 )
 
-// PlayerInfo creates an embed showing player information from Wise Old Man
+// PlayerInfo creates an embed showing player information from Wise Old Man.
 func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 	if player == nil {
 		return &discordgo.MessageEmbed{
@@ -54,7 +54,7 @@ func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 		},
 		{
 			Name:   "Total XP",
-			Value:  fmt.Sprintf("%s", formatNumber(overall.Experience)),
+			Value:  formatNumber(overall.Experience),
 			Inline: true,
 		},
 		{
@@ -111,7 +111,7 @@ func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 	}
 }
 
-// BossOfTheWeek creates an embed for Boss of the Week events
+// BossOfTheWeek creates an embed for Boss of the Week events.
 func BossOfTheWeek(activity models.HiscoreField, womCompetitionID int64) *discordgo.MessageEmbed {
 	womURL := fmt.Sprintf("https://wiseoldman.net/competitions/%d", womCompetitionID)
 
@@ -156,7 +156,7 @@ func BossOfTheWeek(activity models.HiscoreField, womCompetitionID int64) *discor
 	}
 }
 
-// SkillOfTheWeek creates an embed for Skill of the Week events
+// SkillOfTheWeek creates an embed for Skill of the Week events.
 func SkillOfTheWeek(activity models.HiscoreField, womCompetitionID int64) *discordgo.MessageEmbed {
 	womURL := fmt.Sprintf("https://wiseoldman.net/competitions/%d", womCompetitionID)
 	return &discordgo.MessageEmbed{
@@ -177,7 +177,7 @@ func SkillOfTheWeek(activity models.HiscoreField, womCompetitionID int64) *disco
 	}
 }
 
-// EventWinners creates an embed showing event winners
+// EventWinners creates an embed showing event winners.
 func EventWinners(eventType models.EventType, activity models.HiscoreField, winners []WinnerData) *discordgo.MessageEmbed {
 	title := ""
 	switch eventType {
@@ -228,7 +228,7 @@ func EventWinners(eventType models.EventType, activity models.HiscoreField, winn
 	}
 }
 
-// MassEvent creates an embed for mass events
+// MassEvent creates an embed for mass events.
 func MassEvent(activity string, location string, scheduledAt time.Time) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       "⚔️ Mass Event",
@@ -258,15 +258,16 @@ func MassEvent(activity string, location string, scheduledAt time.Time) *discord
 	}
 }
 
-// ScheduledEventReminder creates an embed for event reminders
+// ScheduledEventReminder creates an embed for event reminders.
 func ScheduledEventReminder(eventType models.EventType, activity models.HiscoreField, location string, scheduledAt time.Time) *discordgo.MessageEmbed {
 	title := "📅 Event Reminder"
 	color := ColorInfo
 
-	if eventType == models.EventTypeWildyWednesday {
+	switch eventType {
+	case models.EventTypeWildyWednesday:
 		title = "💀 Wildy Wednesday Reminder"
 		color = ColorWildy
-	} else if eventType == models.EventTypeMass {
+	case models.EventTypeMass:
 		title = "⚔️ Mass Event Reminder"
 		color = ColorMass
 	}
@@ -294,7 +295,7 @@ func ScheduledEventReminder(eventType models.EventType, activity models.HiscoreF
 	}
 }
 
-// ErrorEmbed creates a generic error embed
+// ErrorEmbed creates a generic error embed.
 func ErrorEmbed(message string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       "❌ Error",
@@ -304,7 +305,7 @@ func ErrorEmbed(message string) *discordgo.MessageEmbed {
 	}
 }
 
-// SuccessEmbed creates a generic success embed
+// SuccessEmbed creates a generic success embed.
 func SuccessEmbed(message string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       "✅ Success",
@@ -314,7 +315,7 @@ func SuccessEmbed(message string) *discordgo.MessageEmbed {
 	}
 }
 
-// CompetitionCodeEmbed creates an embed for WOM competition verification codes
+// CompetitionCodeEmbed creates an embed for WOM competition verification codes.
 func CompetitionCodeEmbed(eventName string, verificationCode string, competitionID int64) *discordgo.MessageEmbed {
 	womURL := fmt.Sprintf("https://wiseoldman.net/competitions/%d", competitionID)
 
@@ -341,7 +342,7 @@ func CompetitionCodeEmbed(eventName string, verificationCode string, competition
 	}
 }
 
-// WinnerData holds winner information for display
+// WinnerData holds winner information for display.
 type WinnerData struct {
 	Username   string
 	StartPoint int64
@@ -350,7 +351,7 @@ type WinnerData struct {
 	DiscordID  uint64
 }
 
-// formatNumber formats numbers with commas for readability
+// formatNumber formats numbers with commas for readability.
 func formatNumber(n int64) string {
 	if n < 1000 {
 		return fmt.Sprintf("%d", n)
@@ -367,7 +368,7 @@ func formatNumber(n int64) string {
 	return result
 }
 
-// getBossImageURL returns the OSRS Wiki image URL for a boss/activity
+// getBossImageURL returns the OSRS Wiki image URL for a boss/activity.
 func getBossImageURL(activity string) string {
 	// Map of activity names (snake_case) to OSRS Wiki image URLs
 	bossImages := map[string]string{
@@ -394,7 +395,7 @@ func getBossImageURL(activity string) string {
 		"chaos_elemental":     "https://oldschool.runescape.wiki/images/thumb/Chaos_Elemental.png/280px-Chaos_Elemental.png",
 		"chaos_fanatic":       "https://oldschool.runescape.wiki/images/thumb/Chaos_Fanatic.png/200px-Chaos_Fanatic.png",
 		"crazy_archaeologist": "https://oldschool.runescape.wiki/images/thumb/Crazy_Archaeologist.png/200px-Crazy_Archaeologist.png",
-		"spindel":             "https://oldschool.runescape.wiki/images/thumb/Spindel.png/300px-Spindel.png",
+		"spindle":             "https://oldschool.runescape.wiki/images/thumb/Spindel.png/300px-Spindel.png",
 		"venenatis":           "https://oldschool.runescape.wiki/images/thumb/Venenatis.png/300px-Venenatis.png",
 		"vetion":              "https://oldschool.runescape.wiki/images/thumb/Vet%27ion.png/250px-Vet%27ion.png",
 		// Skilling Bosses
@@ -410,7 +411,7 @@ func getBossImageURL(activity string) string {
 	return "https://oldschool.runescape.wiki/images/OSRS_icon.png"
 }
 
-// MassEventWithTimezone creates an embed for mass events with timezone information
+// MassEventWithTimezone creates an embed for mass events with timezone information.
 func MassEventWithTimezone(activity, location string, scheduledTime time.Time, timezone string) *discordgo.MessageEmbed {
 	// Get timezone abbreviation
 	tzAbbrev := scheduledTime.Format("MST")
@@ -460,25 +461,26 @@ func MassEventWithTimezone(activity, location string, scheduledTime time.Time, t
 	}
 }
 
-// formatActivityName converts snake_case to Title Case for display
+// formatActivityName converts snake_case to Title Case for display.
 func formatActivityName(activity string) string {
 	result := ""
 	capitalize := true
 	for _, c := range activity {
-		if c == '_' {
+		switch {
+		case c == '_':
 			result += " "
 			capitalize = true
-		} else if capitalize {
+		case capitalize:
 			result += string(toUpper(c))
 			capitalize = false
-		} else {
+		default:
 			result += string(c)
 		}
 	}
 	return result
 }
 
-// capitalizeFirst capitalizes the first letter of a string
+// capitalizeFirst capitalizes the first letter of a string.
 func capitalizeFirst(s string) string {
 	if s == "" {
 		return s
@@ -486,7 +488,7 @@ func capitalizeFirst(s string) string {
 	return string(toUpper(rune(s[0]))) + s[1:]
 }
 
-// toUpper converts a lowercase letter to uppercase
+// toUpper converts a lowercase letter to uppercase.
 func toUpper(c rune) rune {
 	if c >= 'a' && c <= 'z' {
 		return c - 32
@@ -494,7 +496,7 @@ func toUpper(c rune) rune {
 	return c
 }
 
-// WelcomeGreeting creates a greeting embed for new members
+// WelcomeGreeting creates a greeting embed for new members.
 func WelcomeGreeting(guildName string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("👋 Welcome to %s!", guildName),

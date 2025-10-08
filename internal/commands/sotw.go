@@ -5,7 +5,7 @@ import (
 	"github.com/kaffeed/voidling/internal/models"
 )
 
-// HandleSOTWStart handles /sotw start command
+// HandleSOTWStart handles /sotw start command.
 func (t *TrackableCommands) HandleSOTWStart(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	// Options[0] is the subcommand, Options[0].Options[0] is the skill parameter
@@ -17,7 +17,7 @@ func (t *TrackableCommands) HandleSOTWStart(s *discordgo.Session, i *discordgo.I
 	}
 }
 
-// HandleSOTWFinish handles /sotw finish command
+// HandleSOTWFinish handles /sotw finish command.
 func (t *TrackableCommands) HandleSOTWFinish(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := t.FinishEvent(s, i, models.EventTypeSkillOfTheWeek)
 	if err != nil {

@@ -1,29 +1,122 @@
-version: 2
-
-linters:
-  disable:
-    - errcheck  # Too noisy, especially for Discord interaction responses that log internally
-    - staticcheck  # Disable style suggestions
-
-issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - errcheck
-        - dupl
-        - gosec
-
-    # Exclude known linters from partially hard-vendored code (sqlc generated)
-    - path: internal/database/
-      linters:
-        - all
-
-  # Maximum issues count per one linter
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text
-  max-same-issues: 0
+version: "2"
 
 run:
   timeout: 5m
+  # Allow multiple parallel golangci-lint instances
+  allow-parallel-runners: true
+
+linters:
+  # Use explicit enable list instead of disable (v2 best practice)
+  enable:
+    # ===== STANDARD LINTERS (already enabled) =====
+    - govet        # Standard Go vet checks
+    - ineffassign  # Detect ineffective assignments
+    - unused       # Detect unused code
+
+    # ===== CRITICAL LINTERS (re-enabled from previous disable) =====
+    - staticcheck  # SA/ST/S checks - critical for Go best practices
+    - errcheck     # Check for unchecked errors
+
+    - contextcheck   # Ensure context is properly propagated
+    - containedctx   # Prevent context.Context in struct fields (anti-pattern)
+    - fatcontext     # Detect nested contexts in loops/function literals
+
+    # ===== ERROR HANDLING LINTERS =====
+    - err113        # Enforce error wrapping with fmt.Errorf("%w")
+    - errorlint     # Check error comparison patterns (errors.Is/As)
+    - errchkjson    # Validate JSON marshaling error checks
+
+    # ===== CODE QUALITY LINTERS =====
+    - gocritic      # Comprehensive style, performance, diagnostic checks
+    - gocyclo       # Cyclomatic complexity
+    - gocognit      # Cognitive complexity
+
+    # ===== CODE STYLE LINTERS =====
+    - godot         # Enforce period at end of comments
+    - goconst       # Find repeated strings → constants
+    - dupword       # Detect duplicate words
+
+    # ===== SECURITY LINTERS =====
+    - gosec         # Security issue detection
+    - bodyclose     # HTTP response body must be closed
+
+    # ===== ADDITIONAL BEST PRACTICES =====
+    - copyloopvar   # Detect loop variable copy issues
+    - durationcheck # Check duration multiplication
+    - errname       # Error naming conventions
+    - gomodguard    # Module dependency validation
+    - goprintffuncname # Printf function naming
+    - noctx         # HTTP requests without context
+    - nolintlint    # Validate //nolint directives
+    - predeclared   # Detect shadowing of predeclared identifiers
+    - reassign      # Detect reassignment issues
+    - unconvert     # Detect unnecessary type conversions
+    - unparam       # Detect unused function parameters
+    - wastedassign  # Detect wasted assignments
+
+
+  # Handle generated code and exclusions
+  exclusions:
+    # Automatically exclude generated files (replaces blanket internal/database/ exclusion)
+    # This will catch sqlc, protobuf, etc. via standard generation markers
+    generated: strict
+
+    # Rule-based exclusions
+    rules:
+      # ===== TEST FILE EXCLUSIONS =====
+      - path: '_test\.go'
+        linters:
+          - funlen        # Tests can be long
+          - dupl          # Tests often have similar structure
+          - gosec         # Tests may use insecure patterns
+          - gocyclo       # Tests can be complex
+          - gocognit      # Tests can be cognitively complex
+          - errcheck      # Tests may not check all errors
+
+      # ===== DISCORD INTERACTION EXCLUSIONS =====
+      # Discord interaction responses are logged internally via sendFollowup helper,
+      # so not checking their error return is acceptable
+      - path: 'internal/(bot|commands)/'
+        text: 'Error return value.*is not checked'
+        linters:
+          - errcheck
+        source: 'sendFollowup\(|\.FollowupMessageCreate\(|\.InteractionRespond\('
+
+      # gosec G104 for Discord calls (separate rule because different message format)
+      - path: 'internal/(bot|commands)/'
+        text: 'G104.*Errors unhandled'
+        linters:
+          - gosec
+        source: 'sendFollowup\(|\.FollowupMessageCreate\(|\.InteractionRespond\('
+
+      # ===== EMBED BUILDER EXCLUSIONS =====
+      # Embed builders use many integer literals for colors, limits
+      - path: 'internal/embeds/'
+        linters:
+          - mnd  # Magic number detection - colors/limits are fine
+          - gomnd
+
+      # ===== MAIN FUNCTION EXCLUSIONS =====
+      # Main functions often have higher complexity
+      - path: 'cmd/.*/main\.go'
+        linters:
+          - gocyclo
+          - gocognit
+          - funlen
+
+      # ===== MIGRATIONS EXCLUSIONS =====
+      # Migration package just embeds files
+      - path: 'migrations/migrations\.go'
+        linters:
+          - gochecknoglobals  # Embed.FS must be global
+
+issues:
+  # Don't limit issues
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+# Formatters (if using golangci-lint for formatting)
+formatters:
+  enable:
+    - gofmt
+    - goimports

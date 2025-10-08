@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,7 +9,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config holds application configuration
+// ErrMissingToken is returned when DISCORD_TOKEN environment variable is not set.
+var ErrMissingToken = errors.New("DISCORD_TOKEN environment variable is required")
+
+// Config holds application configuration.
 type Config struct {
 	DiscordToken      string
 	DatabasePath      string
@@ -17,14 +21,14 @@ type Config struct {
 	CoordinatorRoleID string // Optional: specific role ID for Coordinator permissions
 }
 
-// Load loads configuration from .env file and environment variables
+// Load loads configuration from .env file and environment variables.
 func Load() (*Config, error) {
 	// Try to load .env file (ignore error if file doesn't exist)
 	_ = godotenv.Load()
 
 	token := os.Getenv("DISCORD_TOKEN")
 	if token == "" {
-		return nil, fmt.Errorf("DISCORD_TOKEN environment variable is required")
+		return nil, ErrMissingToken
 	}
 
 	dbPath := os.Getenv("DATABASE_PATH")

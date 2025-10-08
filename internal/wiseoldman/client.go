@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +13,24 @@ import (
 
 const baseURL = "https://api.wiseoldman.net/v2"
 
-// Client is a Wise Old Man API client
+var (
+	// ErrPlayerNotFound is returned when a player is not found in the Wise Old Man API.
+	ErrPlayerNotFound = errors.New("player not found")
+
+	// ErrCompetitionNotFound is returned when a competition is not found in the Wise Old Man API.
+	ErrCompetitionNotFound = errors.New("competition not found")
+
+	// ErrUnexpectedStatus is returned when the API returns an unexpected HTTP status code.
+	ErrUnexpectedStatus = errors.New("unexpected API status")
+)
+
+// Client is a Wise Old Man API client.
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-// NewClient creates a new Wise Old Man API client
+// NewClient creates a new Wise Old Man API client.
 func NewClient() *Client {
 	return &Client{
 		httpClient: &http.Client{
@@ -28,7 +40,7 @@ func NewClient() *Client {
 	}
 }
 
-// GetPlayer fetches a player's details from the Wise Old Man API
+// GetPlayer fetches a player's details from the Wise Old Man API.
 func (c *Client) GetPlayer(ctx context.Context, username string) (*Player, error) {
 	url := fmt.Sprintf("%s/players/%s", c.baseURL, username)
 
@@ -46,12 +58,12 @@ func (c *Client) GetPlayer(ctx context.Context, username string) (*Player, error
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("player not found")
+		return nil, ErrPlayerNotFound
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrUnexpectedStatus, resp.StatusCode, string(body))
 	}
 
 	var player Player
@@ -62,8 +74,7 @@ func (c *Client) GetPlayer(ctx context.Context, username string) (*Player, error
 	return &player, nil
 }
 
-// UpdatePlayer triggers an update for a player in the Wise Old Man database
-// This fetches fresh data from the OSRS hiscores
+// This fetches fresh data from the OSRS hiscores.
 func (c *Client) UpdatePlayer(ctx context.Context, username string) (*Player, error) {
 	url := fmt.Sprintf("%s/players/%s", c.baseURL, username)
 
@@ -81,12 +92,12 @@ func (c *Client) UpdatePlayer(ctx context.Context, username string) (*Player, er
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("player not found")
+		return nil, ErrPlayerNotFound
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrUnexpectedStatus, resp.StatusCode, string(body))
 	}
 
 	var player Player
@@ -97,7 +108,7 @@ func (c *Client) UpdatePlayer(ctx context.Context, username string) (*Player, er
 	return &player, nil
 }
 
-// CreateCompetition creates a new competition
+// CreateCompetition creates a new competition.
 func (c *Client) CreateCompetition(ctx context.Context, req CreateCompetitionRequest) (*CreateCompetitionResponse, error) {
 	url := fmt.Sprintf("%s/competitions", c.baseURL)
 
@@ -116,11 +127,11 @@ func (c *Client) CreateCompetition(ctx context.Context, req CreateCompetitionReq
 	if err != nil {
 		return nil, fmt.Errorf("http request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // Error not actionable in defer
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrUnexpectedStatus, resp.StatusCode, string(body))
 	}
 
 	var result CreateCompetitionResponse
@@ -131,7 +142,7 @@ func (c *Client) CreateCompetition(ctx context.Context, req CreateCompetitionReq
 	return &result, nil
 }
 
-// AddParticipants adds participants to a competition
+// AddParticipants adds participants to a competition.
 func (c *Client) AddParticipants(ctx context.Context, competitionID int64, usernames []string, verificationCode string) (*AddParticipantsResponse, error) {
 	url := fmt.Sprintf("%s/competitions/%d/participants", c.baseURL, competitionID)
 
@@ -155,11 +166,11 @@ func (c *Client) AddParticipants(ctx context.Context, competitionID int64, usern
 	if err != nil {
 		return nil, fmt.Errorf("http request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // Error not actionable in defer
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrUnexpectedStatus, resp.StatusCode, string(body))
 	}
 
 	var result AddParticipantsResponse
@@ -170,7 +181,7 @@ func (c *Client) AddParticipants(ctx context.Context, competitionID int64, usern
 	return &result, nil
 }
 
-// GetCompetition fetches competition details including standings
+// GetCompetition fetches competition details including standings.
 func (c *Client) GetCompetition(ctx context.Context, competitionID int64) (*Competition, error) {
 	url := fmt.Sprintf("%s/competitions/%d", c.baseURL, competitionID)
 
@@ -188,12 +199,12 @@ func (c *Client) GetCompetition(ctx context.Context, competitionID int64) (*Comp
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("competition not found")
+		return nil, ErrCompetitionNotFound
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrUnexpectedStatus, resp.StatusCode, string(body))
 	}
 
 	var competition Competition

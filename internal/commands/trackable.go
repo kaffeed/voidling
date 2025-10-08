@@ -16,14 +16,14 @@ import (
 	"github.com/kaffeed/voidling/internal/wiseoldman"
 )
 
-// TrackableCommands handles BOTW and SOTW event commands
+// TrackableCommands handles BOTW and SOTW event commands.
 type TrackableCommands struct {
 	DB        *database.Queries
 	DBSQL     *sql.DB
 	WOMClient *wiseoldman.Client
 }
 
-// NewTrackableCommands creates a new TrackableCommands instance
+// NewTrackableCommands creates a new TrackableCommands instance.
 func NewTrackableCommands(db *database.Queries, dbSQL *sql.DB, womClient *wiseoldman.Client) *TrackableCommands {
 	return &TrackableCommands{
 		DB:        db,
@@ -32,7 +32,7 @@ func NewTrackableCommands(db *database.Queries, dbSQL *sql.DB, womClient *wiseol
 	}
 }
 
-// StartEvent creates a new WOM competition with thread and registration buttons
+// StartEvent creates a new WOM competition with thread and registration buttons.
 func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.InteractionCreate, eventType models.EventType, activity string) error {
 	ctx := context.Background()
 
@@ -54,7 +54,7 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 	})
 	if err != nil {
 		log.Printf("Error creating thread: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to create event thread. Please try again."),
 			},
@@ -76,7 +76,7 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 	})
 	if err != nil {
 		log.Printf("Error creating WOM competition: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to create competition on Wise Old Man. Please try again."),
 			},
@@ -95,7 +95,7 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 	})
 	if err != nil {
 		log.Printf("Error storing WOM competition: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to save competition. Please try again."),
 			},
@@ -169,14 +169,14 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 		if err != nil {
 			log.Printf("Error posting to event notification channel: %v", err)
 			// Fallback to command channel on error
-			sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+			sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 				Content:    content,
 				Embeds:     []*discordgo.MessageEmbed{embed},
 				Components: components,
 			})
 		} else {
 			// Success - send confirmation in command channel
-			sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+			sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 				Embeds: []*discordgo.MessageEmbed{
 					embeds.SuccessEmbed(fmt.Sprintf("Event created! Check <#%s> for details.", notificationChannelID)),
 				},
@@ -184,7 +184,7 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 		}
 	} else {
 		// No notification channel configured - post in command channel
-		_, err = sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		_, err = sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content:    content,
 			Embeds:     []*discordgo.MessageEmbed{embed},
 			Components: components,
@@ -198,7 +198,7 @@ func (t *TrackableCommands) StartEvent(s *discordgo.Session, i *discordgo.Intera
 	return nil
 }
 
-// SendCompetitionCode sends the WOM verification code to the configured channel
+// SendCompetitionCode sends the WOM verification code to the configured channel.
 func (t *TrackableCommands) SendCompetitionCode(s *discordgo.Session, guildID int64, eventName string, verificationCode string, competitionID int64) {
 	ctx := context.Background()
 
@@ -232,7 +232,7 @@ func (t *TrackableCommands) SendCompetitionCode(s *discordgo.Session, guildID in
 	log.Printf("Successfully sent competition code for '%s' to channel %s", eventName, channelID)
 }
 
-// RegisterForEvent handles registration button clicks
+// RegisterForEvent handles registration button clicks.
 func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.InteractionCreate, womCompetitionID int64, threadID string, eventType models.EventType) error {
 	ctx := context.Background()
 
@@ -250,7 +250,7 @@ func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.
 	// Get WOM competition from database
 	comp, err := t.DB.GetWOMCompetitionByWOMID(ctx, womCompetitionID)
 	if err != nil {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: "Competition not found. It may have been deleted.",
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
@@ -265,7 +265,7 @@ func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.
 
 	link, err := t.DB.GetAccountLinkByDiscordID(ctx, discordID)
 	if err != nil {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: "You need to link your RuneScape account first using `/link-rsn`",
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
@@ -282,7 +282,7 @@ func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.
 	resp, err := t.WOMClient.AddParticipants(ctx, womCompetitionID, []string{link.RunescapeName}, comp.VerificationCode)
 	if err != nil {
 		log.Printf("Error adding participant to WOM: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to register for competition. Please try again."),
 			},
@@ -301,7 +301,7 @@ func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.
 	}
 
 	// Send ephemeral confirmation
-	sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+	sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 		Content: message,
 		Flags:   discordgo.MessageFlagsEphemeral,
 	})
@@ -309,7 +309,7 @@ func (t *TrackableCommands) RegisterForEvent(s *discordgo.Session, i *discordgo.
 	return nil
 }
 
-// ListParticipants shows the list of participants for a WOM competition
+// ListParticipants shows the list of participants for a WOM competition.
 func (t *TrackableCommands) ListParticipants(s *discordgo.Session, i *discordgo.InteractionCreate, womCompetitionID int64) error {
 	ctx := context.Background()
 
@@ -328,7 +328,7 @@ func (t *TrackableCommands) ListParticipants(s *discordgo.Session, i *discordgo.
 	competition, err := t.WOMClient.GetCompetition(ctx, womCompetitionID)
 	if err != nil {
 		log.Printf("Error fetching competition: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to fetch competition details."),
 			},
@@ -338,7 +338,7 @@ func (t *TrackableCommands) ListParticipants(s *discordgo.Session, i *discordgo.
 	}
 
 	if len(competition.Participations) == 0 {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: "No participants yet! Be the first to register!",
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
@@ -356,7 +356,7 @@ func (t *TrackableCommands) ListParticipants(s *discordgo.Session, i *discordgo.
 		msg.WriteString(fmt.Sprintf("%d. %s - %d gained\n", i+1, p.Player.DisplayName, gained))
 	}
 
-	sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+	sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 		Content: msg.String(),
 		Flags:   discordgo.MessageFlagsEphemeral,
 	})
@@ -364,7 +364,7 @@ func (t *TrackableCommands) ListParticipants(s *discordgo.Session, i *discordgo.
 	return nil
 }
 
-// FinishEvent ends a WOM competition and announces winners
+// FinishEvent ends a WOM competition and announces winners.
 func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.InteractionCreate, eventType models.EventType) error {
 	ctx := context.Background()
 
@@ -380,7 +380,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 	eventTypeStr := string(eventType)
 	comp, err := t.DB.GetLatestWOMCompetitionByType(ctx, eventTypeStr)
 	if err != nil {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: fmt.Sprintf("There's no active %s competition ongoing!", getEventDisplayName(eventType)),
 		})
 		return err
@@ -390,7 +390,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 	competition, err := t.WOMClient.GetCompetition(ctx, comp.WomCompetitionID)
 	if err != nil {
 		log.Printf("Error fetching competition: %v", err)
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				embeds.ErrorEmbed("Failed to fetch competition details. Please try again."),
 			},
@@ -399,7 +399,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	if len(competition.Participations) == 0 {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: "Sadly there were no participants this time! :(",
 		})
 		return nil
@@ -422,7 +422,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 			// Find Discord ID for this player
 			link, err := t.DB.GetAccountLinkByUsername(ctx, p.Player.Username)
 			discordID := uint64(0)
-			if err == nil {
+			if err == nil && link.DiscordMemberID >= 0 {
 				discordID = uint64(link.DiscordMemberID)
 			}
 
@@ -435,7 +435,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	if len(winnersData) == 0 {
-		sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+		sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 			Content: "No one made any progress during this competition!",
 		})
 		return nil
@@ -462,7 +462,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 			unit)
 	}
 
-	_, err = sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+	_, err = sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 		Content: content,
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
@@ -473,7 +473,7 @@ func (t *TrackableCommands) FinishEvent(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	// Send winners embed
-	_, err = sendFollowup(s, i.Interaction, true, &discordgo.WebhookParams{
+	_, err = sendFollowup(s, i.Interaction, &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{
 			embeds.EventWinners(eventType, models.HiscoreField(comp.Metric), winnersData),
 		},

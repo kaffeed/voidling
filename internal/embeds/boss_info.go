@@ -1,12 +1,12 @@
 package embeds
 
-// BossInfo contains description and wiki link for a boss
+// BossInfo contains description and wiki link for a boss.
 type BossInfo struct {
 	Description string
 	WikiURL     string
 }
 
-// bossInformation maps boss names to their info
+// bossInformation maps boss names to their info.
 var bossInformation = map[string]BossInfo{
 	// Wildy Bosses
 	"callisto": {
@@ -49,7 +49,7 @@ var bossInformation = map[string]BossInfo{
 		Description: "The reanimated form of Vet'ion, part of the Wilderness Boss Rework.",
 		WikiURL:     "https://oldschool.runescape.wiki/w/Calvar%27ion/Strategies",
 	},
-	"spindel": {
+	"spindle": {
 		Description: "The awakened form of Venenatis, part of the Wilderness Boss Rework.",
 		WikiURL:     "https://oldschool.runescape.wiki/w/Spindel/Strategies",
 	},
@@ -211,7 +211,7 @@ var bossInformation = map[string]BossInfo{
 	},
 }
 
-// GetBossInfo returns the boss info for a given boss name
+// GetBossInfo returns the boss info for a given boss name.
 func GetBossInfo(bossName string) (BossInfo, bool) {
 	info, exists := bossInformation[bossName]
 	return info, exists

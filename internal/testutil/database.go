@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// SetupTestDB creates an in-memory SQLite database for testing with migrations applied
+// SetupTestDB creates an in-memory SQLite database for testing with migrations applied.
 func SetupTestDB(t *testing.T) (*sql.DB, *database.Queries) {
 	t.Helper()
 
@@ -31,7 +31,7 @@ func SetupTestDB(t *testing.T) (*sql.DB, *database.Queries) {
 	return db, queries
 }
 
-// CleanupTestDB closes the test database connection
+// CleanupTestDB closes the test database connection.
 func CleanupTestDB(t *testing.T, db *sql.DB) {
 	t.Helper()
 	if db != nil {
@@ -39,7 +39,7 @@ func CleanupTestDB(t *testing.T, db *sql.DB) {
 	}
 }
 
-// CreateTestAccountLink creates a test account link for testing purposes
+// CreateTestAccountLink creates a test account link for testing purposes.
 func CreateTestAccountLink(t *testing.T, q *database.Queries, discordID int64, rsn string, active bool) database.AccountLink {
 	t.Helper()
 

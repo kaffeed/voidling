@@ -8,7 +8,7 @@ import (
 // Boss and skill choices for BOTW/SOTW events
 // These map to Wise Old Man API metric names
 
-// WildyBoss represents wilderness bosses
+// WildyBoss represents wilderness bosses.
 type WildyBoss string
 
 const (
@@ -20,12 +20,12 @@ const (
 	WildyChaosElemental     WildyBoss = "chaos_elemental"
 	WildyChaosFanatic       WildyBoss = "chaos_fanatic"
 	WildyCrazyArchaeologist WildyBoss = "crazy_archaeologist"
-	WildySpindel            WildyBoss = "spindel"
+	WildySpindel            WildyBoss = "spindle"
 	WildyVenenatis          WildyBoss = "venenatis"
 	WildyVetion             WildyBoss = "vetion"
 )
 
-// GroupBoss represents group bosses
+// GroupBoss represents group bosses.
 type GroupBoss string
 
 const (
@@ -38,7 +38,7 @@ const (
 	GroupKreeArra         GroupBoss = "kreearra"
 )
 
-// QuestBoss represents quest/solo bosses
+// QuestBoss represents quest/solo bosses.
 type QuestBoss string
 
 const (
@@ -53,7 +53,7 @@ const (
 	QuestZalcano           QuestBoss = "zalcano"
 )
 
-// SlayerBoss represents slayer bosses
+// SlayerBoss represents slayer bosses.
 type SlayerBoss string
 
 const (
@@ -65,7 +65,7 @@ const (
 	SlayerCerberus                SlayerBoss = "cerberus"
 )
 
-// WorldBoss represents world bosses
+// WorldBoss represents world bosses.
 type WorldBoss string
 
 const (
@@ -80,7 +80,7 @@ const (
 	WorldSkotizo               WorldBoss = "skotizo"
 )
 
-// MassBoss represents bosses commonly done in mass events
+// MassBoss represents bosses commonly done in mass events.
 type MassBoss string
 
 const (
@@ -96,7 +96,7 @@ const (
 	MassTheatreOfBlood    MassBoss = "theatre_of_blood"
 	MassChambersOfXeric   MassBoss = "chambers_of_xeric"
 	MassTombsOfAmascut    MassBoss = "tombs_of_amascut"
-	// Wildy bosses
+	// Wildy bosses.
 	MassKingBlackDragon    MassBoss = "king_black_dragon"
 	MassScorpia            MassBoss = "scorpia"
 	MassArtio              MassBoss = "artio"
@@ -105,16 +105,16 @@ const (
 	MassChaosElemental     MassBoss = "chaos_elemental"
 	MassChaosFanatic       MassBoss = "chaos_fanatic"
 	MassCrazyArchaeologist MassBoss = "crazy_archaeologist"
-	MassSpindel            MassBoss = "spindel"
+	MassSpindel            MassBoss = "spindle"
 	MassVenenatis          MassBoss = "venenatis"
 	MassVetion             MassBoss = "vetion"
-	// Skilling bosses
+	// Skilling bosses.
 	MassTempoross          MassBoss = "tempoross"
 	MassWintertodt         MassBoss = "wintertodt"
 	MassGuardiansOfTheRift MassBoss = "guardians_of_the_rift"
 )
 
-// Skill represents non-combat skills for SOTW
+// Skill represents non-combat skills for SOTW.
 type Skill string
 
 const (
@@ -137,7 +137,7 @@ const (
 	SkillConstruction Skill = "construction"
 )
 
-// WildyBossChoices returns Discord choices for wilderness bosses
+// WildyBossChoices returns Discord choices for wilderness bosses.
 func WildyBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "King Black Dragon", Value: string(WildyKingBlackDragon)},
@@ -148,13 +148,13 @@ func WildyBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 		{Name: "Chaos Elemental", Value: string(WildyChaosElemental)},
 		{Name: "Chaos Fanatic", Value: string(WildyChaosFanatic)},
 		{Name: "Crazy Archaeologist", Value: string(WildyCrazyArchaeologist)},
-		{Name: "Spindel", Value: string(WildySpindel)},
+		{Name: "Spindle", Value: string(WildySpindel)},
 		{Name: "Venenatis", Value: string(WildyVenenatis)},
 		{Name: "Vet'ion", Value: string(WildyVetion)},
 	}
 }
 
-// GroupBossChoices returns Discord choices for group bosses
+// GroupBossChoices returns Discord choices for group bosses.
 func GroupBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Corporeal Beast", Value: string(GroupCorporealBeast)},
@@ -167,7 +167,7 @@ func GroupBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// QuestBossChoices returns Discord choices for quest bosses
+// QuestBossChoices returns Discord choices for quest bosses.
 func QuestBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Duke Sucellus", Value: string(QuestDukeSucellus)},
@@ -182,7 +182,7 @@ func QuestBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// SlayerBossChoices returns Discord choices for slayer bosses
+// SlayerBossChoices returns Discord choices for slayer bosses.
 func SlayerBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Grotesque Guardians", Value: string(SlayerGrotesqueGuardians)},
@@ -194,7 +194,7 @@ func SlayerBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// WorldBossChoices returns Discord choices for world bosses
+// WorldBossChoices returns Discord choices for world bosses.
 func WorldBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Barrows Chests", Value: string(WorldBarrows)},
@@ -209,7 +209,7 @@ func WorldBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// MassBossChoices returns Discord choices for mass event bosses
+// MassBossChoices returns Discord choices for mass event bosses.
 func MassBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Corporeal Beast", Value: string(MassCorporealBeast)},
@@ -229,7 +229,7 @@ func MassBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 		{Name: "Artio", Value: string(MassArtio)},
 		{Name: "Callisto", Value: string(MassCallisto)},
 		{Name: "Calvarion", Value: string(MassCalvarion)},
-		{Name: "Spindel", Value: string(MassSpindel)},
+		{Name: "Spindle", Value: string(MassSpindel)},
 		{Name: "Venenatis", Value: string(MassVenenatis)},
 		{Name: "Vet'ion", Value: string(MassVetion)},
 		{Name: "Tempoross", Value: string(MassTempoross)},
@@ -238,7 +238,7 @@ func MassBossChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// SkillChoices returns Discord choices for skills
+// SkillChoices returns Discord choices for skills.
 func SkillChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{Name: "Prayer", Value: string(SkillPrayer)},
@@ -261,26 +261,27 @@ func SkillChoices() []*discordgo.ApplicationCommandOptionChoice {
 	}
 }
 
-// FormatActivityName converts snake_case to Title Case for display
+// FormatActivityName converts snake_case to Title Case for display.
 func FormatActivityName(activity string) string {
 	// Simple conversion for display
 	result := ""
 	capitalize := true
 	for _, c := range activity {
-		if c == '_' {
+		switch {
+		case c == '_':
 			result += " "
 			capitalize = true
-		} else if capitalize {
+		case capitalize:
 			result += string(c - 32) // Convert to uppercase
 			capitalize = false
-		} else {
+		default:
 			result += string(c)
 		}
 	}
 	return result
 }
 
-// TimezoneChoices returns autocomplete choices for common timezones
+// TimezoneChoices returns autocomplete choices for common timezones.
 func TimezoneChoices() []*discordgo.ApplicationCommandOptionChoice {
 	timezones := timezone.CommonTimezones()
 	choices := make([]*discordgo.ApplicationCommandOptionChoice, 0, len(timezones))

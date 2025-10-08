@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockWOMClient is a mock implementation of the Wise Old Man API client
+// MockWOMClient is a mock implementation of the Wise Old Man API client.
 type MockWOMClient struct {
 	mock.Mock
 }
 
-// GetPlayer mocks fetching a player from WOM API
+// GetPlayer mocks fetching a player from WOM API.
 func (m *MockWOMClient) GetPlayer(ctx context.Context, username string) (*wiseoldman.Player, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -21,7 +21,7 @@ func (m *MockWOMClient) GetPlayer(ctx context.Context, username string) (*wiseol
 	return args.Get(0).(*wiseoldman.Player), args.Error(1)
 }
 
-// UpdatePlayer mocks updating a player in WOM
+// UpdatePlayer mocks updating a player in WOM.
 func (m *MockWOMClient) UpdatePlayer(ctx context.Context, username string) (*wiseoldman.Player, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -30,7 +30,7 @@ func (m *MockWOMClient) UpdatePlayer(ctx context.Context, username string) (*wis
 	return args.Get(0).(*wiseoldman.Player), args.Error(1)
 }
 
-// CreateCompetition mocks creating a WOM competition
+// CreateCompetition mocks creating a WOM competition.
 func (m *MockWOMClient) CreateCompetition(ctx context.Context, req wiseoldman.CreateCompetitionRequest) (*wiseoldman.CreateCompetitionResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -39,13 +39,13 @@ func (m *MockWOMClient) CreateCompetition(ctx context.Context, req wiseoldman.Cr
 	return args.Get(0).(*wiseoldman.CreateCompetitionResponse), args.Error(1)
 }
 
-// AddParticipantsToCompetition mocks adding participants to a competition
+// AddParticipantsToCompetition mocks adding participants to a competition.
 func (m *MockWOMClient) AddParticipantsToCompetition(ctx context.Context, competitionID int64, usernames []string, verificationCode string) error {
 	args := m.Called(ctx, competitionID, usernames, verificationCode)
 	return args.Error(0)
 }
 
-// CreateTestPlayer creates a test WOM player with realistic data
+// CreateTestPlayer creates a test WOM player with realistic data.
 func CreateTestPlayer(username string) *wiseoldman.Player {
 	return &wiseoldman.Player{
 		ID:          12345,
@@ -154,7 +154,7 @@ func CreateTestPlayer(username string) *wiseoldman.Player {
 	}
 }
 
-// CreateTestCompetitionResponse creates a test competition creation response
+// CreateTestCompetitionResponse creates a test competition creation response.
 func CreateTestCompetitionResponse(title string, metric string, competitionID int64) *wiseoldman.CreateCompetitionResponse {
 	return &wiseoldman.CreateCompetitionResponse{
 		Competition: wiseoldman.Competition{
