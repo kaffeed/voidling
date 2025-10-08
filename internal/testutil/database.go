@@ -18,7 +18,8 @@ func SetupTestDB(t *testing.T) (*sql.DB, *database.Queries) {
 	require.NoError(t, err, "Failed to create in-memory database")
 
 	// Run migrations
-	goose.SetDialect("sqlite3")
+	err = goose.SetDialect("sqlite3")
+	require.NoError(t, err, "Failed to set goose dialect")
 	err = goose.Up(db, "../../migrations")
 	if err != nil {
 		// Try alternative path for tests in different directories
@@ -34,7 +35,7 @@ func SetupTestDB(t *testing.T) (*sql.DB, *database.Queries) {
 func CleanupTestDB(t *testing.T, db *sql.DB) {
 	t.Helper()
 	if db != nil {
-		db.Close()
+		_ = db.Close()
 	}
 }
 

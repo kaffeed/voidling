@@ -43,7 +43,7 @@ func (c *Client) GetPlayer(ctx context.Context, username string) (*Player, error
 	if err != nil {
 		return nil, fmt.Errorf("http request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("player not found")
@@ -78,7 +78,7 @@ func (c *Client) UpdatePlayer(ctx context.Context, username string) (*Player, er
 	if err != nil {
 		return nil, fmt.Errorf("http request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("player not found")
@@ -185,7 +185,7 @@ func (c *Client) GetCompetition(ctx context.Context, competitionID int64) (*Comp
 	if err != nil {
 		return nil, fmt.Errorf("http request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("competition not found")

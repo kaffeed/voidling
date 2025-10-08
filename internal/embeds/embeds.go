@@ -480,7 +480,7 @@ func formatActivityName(activity string) string {
 
 // capitalizeFirst capitalizes the first letter of a string
 func capitalizeFirst(s string) string {
-	if len(s) == 0 {
+	if s == "" {
 		return s
 	}
 	return string(toUpper(rune(s[0]))) + s[1:]

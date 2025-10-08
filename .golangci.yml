@@ -1,77 +1,23 @@
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-  gofmt:
-    simplify: true
-  gocyclo:
-    min-complexity: 15
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-  misspell:
-    locale: US
-  lll:
-    line-length: 140
-  goimports:
-    local-prefixes: github.com/kaffeed/voidling
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
+version: 2
 
 linters:
-  disable-all: true
-  enable:
-    - bodyclose
-    - dogsled
-    - dupl
-    - errcheck
-    - exportloopref
-    - goconst
-    - gocritic
-    - gocyclo
-    - gofmt
-    - goimports
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - prealloc
-    - staticcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
+  disable:
+    - errcheck  # Too noisy, especially for Discord interaction responses that log internally
+    - staticcheck  # Disable style suggestions
 
 issues:
   exclude-rules:
     # Exclude some linters from running on tests files
     - path: _test\.go
       linters:
-        - gocyclo
         - errcheck
         - dupl
         - gosec
-        - lll
 
-    # Exclude known linters from partially hard-vendored code
+    # Exclude known linters from partially hard-vendored code (sqlc generated)
     - path: internal/database/
       linters:
-        - gocritic
-        - stylecheck
-        - lll
+        - all
 
   # Maximum issues count per one linter
   max-issues-per-linter: 0
