@@ -41,3 +41,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Embedded migrations (copied from migrations/ for embedding)
+internal/migrations/*.sql

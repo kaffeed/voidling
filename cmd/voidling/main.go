@@ -16,6 +16,7 @@ import (
 	"github.com/kaffeed/voidling/config"
 	"github.com/kaffeed/voidling/internal/bot"
 	"github.com/kaffeed/voidling/internal/database"
+	"github.com/kaffeed/voidling/internal/migrations"
 )
 
 func main() {
@@ -97,26 +98,15 @@ func run() error {
 }
 
 func runMigrations(db *sql.DB) error {
-	goose.SetBaseFS(nil)
-
+	// Set dialect
 	if err := goose.SetDialect("sqlite3"); err != nil {
 		return err
 	}
 
-	// Get migrations directory
-	// In production, migrations should be embedded or in a known location
-	migrationsDir := "migrations"
+	// Use embedded migrations
+	goose.SetBaseFS(migrations.FS)
 
-	// Check if migrations directory exists
-	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
-		// Try relative to executable
-		ex, err := os.Executable()
-		if err == nil {
-			migrationsDir = filepath.Join(filepath.Dir(ex), "migrations")
-		}
-	}
-
-	if err := goose.Up(db, migrationsDir); err != nil {
+	if err := goose.Up(db, "."); err != nil {
 		return err
 	}
 
