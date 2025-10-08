@@ -22,7 +22,7 @@ GOFMT=$(GOCMD) fmt
 LDFLAGS=-ldflags "-s -w"
 BUILD_FLAGS=-trimpath
 
-.PHONY: all build build-windows build-linux build-darwin clean test test-unit test-integration coverage test-coverage-html test-race test-bench run install-tools sqlc-generate migrate-up migrate-down migrate-status fmt vet lint help check sync-migrations
+.PHONY: all build build-windows build-linux build-darwin clean test test-unit test-integration coverage test-coverage-html test-race test-bench run install-tools sqlc-generate migrate-up migrate-down migrate-status fmt vet lint help check
 
 # Default target
 all: clean fmt vet build
@@ -36,34 +36,27 @@ help:
 	@echo "Targets:"
 	@grep -E '^## ' Makefile | sed 's/## /  /'
 
-## sync-migrations: Copy migrations to internal/migrations for embedding
-sync-migrations:
-	@echo "Syncing migrations..."
-	@mkdir -p internal/migrations
-	@cp $(MIGRATIONS_DIR)/*.sql internal/migrations/
-	@echo "Migrations synced to internal/migrations/"
-
 ## build: Build the application for current OS
-build: sync-migrations
+build:
 	@echo "Building $(BINARY_NAME)..."
 	$(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BINARY_NAME) $(CMD_PATH)
 	@echo "Build complete: $(BINARY_NAME)"
 
 ## build-windows: Build for Windows (amd64)
-build-windows: sync-migrations
+build-windows:
 	@echo "Building for Windows..."
 	GOOS=windows GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_WINDOWS) $(CMD_PATH)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_WINDOWS)"
 
 ## build-linux: Build for Linux (amd64) with CGO enabled for SQLite
-build-linux: sync-migrations
+build-linux:
 	@echo "Building for Linux with CGO..."
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_UNIX) $(CMD_PATH)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_UNIX)"
 
 ## build-darwin: Build for macOS (amd64 and arm64)
-build-darwin: sync-migrations
+build-darwin:
 	@echo "Building for macOS (amd64)..."
 	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_UNIX)-darwin-amd64 $(CMD_PATH)
 	@echo "Building for macOS (arm64)..."

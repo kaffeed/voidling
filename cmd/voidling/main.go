@@ -16,7 +16,7 @@ import (
 	"github.com/kaffeed/voidling/config"
 	"github.com/kaffeed/voidling/internal/bot"
 	"github.com/kaffeed/voidling/internal/database"
-	"github.com/kaffeed/voidling/internal/migrations"
+	"github.com/kaffeed/voidling/migrations"
 )
 
 func main() {
