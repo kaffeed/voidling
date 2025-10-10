@@ -59,7 +59,7 @@ func PlayerInfo(player *wiseoldman.Player) *discordgo.MessageEmbed {
 		},
 		{
 			Name:   "Rank",
-			Value:  fmt.Sprintf("#%s", formatNumber(int64(overall.Rank))),
+			Value:  formatNumber(int64(overall.Rank)),
 			Inline: true,
 		},
 		{
